@@ -28,13 +28,13 @@
         "build:lint:test": "pnpm build && pnpm build:tests:node && pnpm lint:fix",
         "prepublish": "pnpm build"
     },
-    "homepage": "https://github.com/jintekc/did-btc1-js",
+    "homepage": "https://github.com/jintekc/did-btc1-method",
     "bugs": {
-        "url": "https://github.com/jintekc/did-btc1-js/issues"
+        "url": "https://github.com/jintekc/did-btc1-method/issues"
     },
     "repository": {
         "type": "git",
-        "url": "git+ssh://git@github.com/jintekc/did-btc1-js.git"
+        "url": "git+ssh://git@github.com/jintekc/did-btc1-method.git"
     },
     "license": "MPL-2.0",
     "contributors": [
