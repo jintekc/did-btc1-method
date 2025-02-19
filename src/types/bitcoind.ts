@@ -1,4 +1,4 @@
-import Bitcoind from '../bitcoin/client.js';
+import BitcoinClient from '../bitcoin/client.js';
 import { Hex, UnixTimestamp } from './btc1.js';
 
 export interface ReturnFormatOptions {
@@ -941,6 +941,6 @@ export enum RawTransactionVerbosity {
 }
 export interface TargetBlockHeight {
     block: BitcoinBlock;
-    bitcoind: Bitcoind;
+    bitcoind: BitcoinClient;
     targetTime?: UnixTimestamp;
 }
