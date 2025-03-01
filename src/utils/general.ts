@@ -1,14 +1,13 @@
 import { schnorr } from '@noble/curves/secp256k1';
 import { sha256 } from '@noble/hashes/sha256';
-import { utils, CURVE } from '@noble/secp256k1';
+import { utils, CURVE, getPublicKey } from '@noble/secp256k1';
 import { HDKey } from '@scure/bip32';
 import { generateMnemonic, mnemonicToSeed } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import { canonicalize } from '@web5/crypto';
-import { JSONObject } from './exts.js';
+import { JSONObject } from '../exts.js';
 import { KeyPair } from '../types/btc1.js';
-
-type HdWallet = { mnemonic: string, hdkey: HDKey };
+import { HdWallet } from '../types/crypto.js';
 
 /**
  * Static class of general utility functions for the did-btc1 spec implementation
@@ -66,6 +65,14 @@ export class GeneralUtils {
     }
     return { mnemonic, hdkey };
   }
+
+  static generateCompressedSecp256k1KeyPair(){
+    const privateKey = utils.randomPrivateKey();
+    if(!utils.isValidPrivateKey(privateKey)) {
+      throw new Error('Invalid private key');
+    }
+    return { privateKey, publicKey: getPublicKey(privateKey, true) };
+  };
 
   /**
    * Recovers an HDKey from a mnemonic phrase

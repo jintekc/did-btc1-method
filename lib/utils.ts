@@ -1,4 +1,4 @@
-import Btc1AuxUtils from '../src/utils/btc1/utils.js';
+import { GeneralUtils } from '../src/utils/general.js';
 
 const xorent = new Uint8Array([
   51, 244, 91, 193, 57, 100, 160,
@@ -14,5 +14,5 @@ const salt = new Uint8Array([
   38, 130, 251, 184, 213, 22, 190,
   117, 168, 247, 251
 ]);
-const privkey = Btc1AuxUtils.recoverPrivateKey(xorent, salt);
+const privkey = GeneralUtils.recoverTweakedRawPrivateKey(xorent, salt);
 console.log('privkey', privkey);

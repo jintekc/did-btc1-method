@@ -1,4 +1,3 @@
-import { DidBtc1Utils } from '../src/did-btc1';
 import { strings } from '@helia/strings';
 import { createHelia } from 'helia';
 import { CID } from 'multiformats/cid';
@@ -6,6 +5,7 @@ import * as Digest from 'multiformats/hashes/digest';
 import { sha256 } from '@noble/hashes/sha256';
 import { canonicalize } from '@web5/crypto';
 import { bech32 } from '@scure/base';
+import DidBtc1Utils from '../src/did-btc1-utils.js';
 
 const parsable = (content: string) => {
   try {
@@ -66,12 +66,13 @@ console.log('identifierComponents', identifierComponents);
 const hashBytes = identifierComponents.genesisBytes;
 console.log('hashBytes', hashBytes);
 
-// const helia = strings(await createHelia());
-// const cid = await helia.add(hashByteString);
-// console.log('cid', cid);
+const helia = strings(await createHelia());
+const cid = await helia.add(hashBytes.toString(), {});
+console.log('cid', cid);
 // const cid = CID.create(1, 1, Digest.create(1, hashBytes));
-// const content = await helia.get(ipfsCid, {})
-// if (!parsable(content)) {
-//     throw new Error('Invalid DID Document content')
-// }
-// return JSON.parse(content) as Btc1DidDocument
+const content = await helia.get(cid, {});
+if (!parsable(content)) {
+  throw new Error('Invalid DID Document content');
+}
+const document = JSON.parse(content);
+console.log('document', document);

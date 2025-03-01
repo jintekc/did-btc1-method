@@ -1,7 +1,7 @@
 import type { DidService } from '@web5/dids';
 import { DidError, DidErrorCode } from '@web5/dids';
 import { base58btc } from 'multiformats/bases/base58';
-import Bitcoind from '../bitcoin/bitcoin-client.js';
+import Bitcoind from '../bitcoin/client.js';
 import { SignedRawTx } from '../types/bitcoind.js';
 import {
   BeaconServiceEndpoint,
@@ -13,7 +13,7 @@ import {
   ProofOptions,
   UpdatePayload
 } from '../types/btc1.js';
-import { DidBtc1Error } from '../utils/did-btc1-error.js';
+import { DidBtc1Error } from '../utils/errors.js';
 import { GeneralUtils } from '../utils/general.js';
 import JsonPatch from '../utils/json-patch.js';
 

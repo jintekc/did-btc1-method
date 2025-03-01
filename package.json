@@ -1,8 +1,8 @@
 {
-    "name": "did-btc1-js",
-    "version": "0.2.0",
+    "name": "@did-btc1/method",
+    "version": "0.3.0",
     "type": "module",
-    "description": "did-btc1-js is the typescript/javascript reference implementation of the did:btc1 spec. did:btc1 is a censorship resistant DID Method using the Bitcoin blockchain as a Verifiable Data Registry to announce changes to the DID document. It improves on prior work by allowing: zero-cost off-chain DID creation; aggregated updates for scalable on-chain update costs; long-term identifiers that can support frequent updates; private communication of the DID document; private DID resolution; and non-repudiation appropriate for serious contracts.",
+    "description": "@did-btc1/method is the typescript/javascript reference implementation of the did:btc1 spec. did:btc1 is a censorship resistant DID Method using the Bitcoin blockchain as a Verifiable Data Registry to announce changes to the DID document. It improves on prior work by allowing: zero-cost off-chain DID creation; aggregated updates for scalable on-chain update costs; long-term identifiers that can support frequent updates; private communication of the DID document; private DID resolution; and non-repudiation appropriate for serious contracts.",
     "main": "./dist/cjs/index.js",
     "module": "./dist/esm/index.js",
     "types": "./dist/types/index.d.ts",
@@ -33,7 +33,8 @@
         "test:node": "pnpm build:tests:node && pnpm c8 mocha",
         "test:browser": "pnpm build:tests:browser && web-test-runner",
         "build:test": "pnpm build && pnpm build:tests:node && pnpm test:node",
-        "build:lint:test": "pnpm build && pnpm build:tests:node && pnpm lint:fix"
+        "build:lint:test": "pnpm build && pnpm build:tests:node && pnpm lint:fix",
+        "prepublish": "pnpm build"
     },
     "homepage": "https://github.com/jintekc/did-btc1-js",
     "bugs": {
@@ -46,7 +47,7 @@
     "license": "MPL-2.0",
     "contributors": [
         {
-            "name": "Jintek",
+            "name": "jintekc",
             "url": "https://github.com/jintekc"
         }
     ],
@@ -70,6 +71,7 @@
         "node": ">=22.0.0"
     },
     "dependencies": {
+        "@did-btc1/key-manager": "^1.2.0",
         "@helia/strings": "^4.0.2",
         "@noble/curves": "^1.8.1",
         "@noble/hashes": "^1.5.0",

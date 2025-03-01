@@ -1,9 +1,9 @@
-import Bitcoind from '../src/utils/bitcoind.js';
-import { DEFAULT_CLIENT_CONFIG } from '../src/utils/bitcoind/constants.js';
-import { RawTransactionVerbosity } from '../src/utils/bitcoind/types.js';
+import BitcoinClient from '../src/bitcoin/bitcoin-client.js';
+import { DEFAULT_CLIENT_CONFIG } from '../src/constants/bitcoind.js';
+import { RawTransactionVerbosity } from '../src/types/bitcoind.js';
 import { testKetDidDocument } from './out/test-key-did.js';
 
-const bob = Bitcoind.connect(DEFAULT_CLIENT_CONFIG);
+const bob = BitcoinClient.connect(DEFAULT_CLIENT_CONFIG);
 const contemporaryBlockheight = 1789;
 const blockhash = await bob.getBlockHash(contemporaryBlockheight);
 const block = await bob.getBlock(blockhash);

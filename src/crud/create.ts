@@ -4,9 +4,9 @@ import { canonicalize } from '@web5/crypto';
 import type { DidService, DidVerificationMethod } from '@web5/dids';
 import { DidError, DidErrorCode } from '@web5/dids';
 import { networks } from 'bitcoinjs-lib';
-import { DidBtc1 } from '../did-btc1.js';
 import { ID_PLACEHOLDER_VALUE } from '../constants/btc1.js';
-import SchnorrSecp256k1Multikey from '../data-integrity/schnorr-secp256k1-multikey.js';
+import DidBtc1Utils from '../did-btc1-utils.js';
+import { DidBtc1 } from '../did-btc1.js';
 import {
   Btc1DidDocument,
   BtcNetworks,
@@ -16,30 +16,36 @@ import {
   CreateResponse,
   IntermediateVerificationMethod
 } from '../types/btc1.js';
-import { DidBtc1Utils } from '../utils/did-btc1-utils.js';
+import { Bip340MultikeyUtils } from '@did-btc1/key-manager';
 
 /**
- * Implements the {@link https://dcdpr.github.io/did-btc1/#create | Create} section of the
- * {@link https://dcdpr.github.io/did-btc1/ | DID BTC1} spec for creating `did:btc1` dids and did documents.
+ * Implements section {@link https://dcdpr.github.io/did-btc1/#create | 4.1 Create} of the
+ * {@link https://dcdpr.github.io/did-btc1/ | did:btc1 DID Method Specification} for creating a did:btc1 identifier and
+ * associated DID document
+ * @export
+ * @class Btc1Create
+ * @type {Btc1Create}
  */
 export class Btc1Create {
   /**
-     * Create a `did:btc1` DID and its corresponding DID Document from public key bytes
-     * For required params, @see {@link CreateDeterministic}
-     * @param params.version: did-btc1 identifier version
-     * @param params.network: did-btc1 bitcoin network
-     * @param params.pubKeyBytes: public key bytes for id creation
-     * @returns Object {@link CreateResponse}
+     * Create a did:btc1 identifier and associated DID Document deterministically from public key bytes
+     * @param {CreateDeterministic} params Required params for calling the deterministic method
+     * @param {string} params.version did-btc1 identifier version
+     * @param {string} params.network did-btc1 bitcoin network
+     * @param {PublicKeyBytes} params.pubKeyBytes public key bytes for id creation
+     * @returns {CreateResponse} object containing the created did and initial document
      */
-  static deterministic({ version, network, pubKeyBytes }: CreateDeterministic): CreateResponse {
+  static deterministic({ version, network, publicKey }: CreateDeterministic): CreateResponse {
     // Set idType to key
     const idType = 'key';
-    // Set genesisBytes to pubKeyBytes
-    const genesisBytes = pubKeyBytes;
+    // Set genesisBytes to publicKey
+    const genesisBytes = publicKey;
     // Create key-type identifier from genesisBytes
     const did = this.identifier({ idType, network, version, genesisBytes });
     // Set the BTC network based on network name passed or default mainnet bitcoin
     const btcnetwork = BtcNetworks.get(network) ?? networks.bitcoin;
+    // Get xOnlyPublicKey from publicKey
+    const xOnlyPublicKey = publicKey.slice(1, 33);
     // Return did & initialDocument
     return {
       did,
@@ -58,9 +64,9 @@ export class Btc1Create {
           id                 : '#initialKey',
           type               : 'Multikey',
           controller         : did,
-          publicKeyMultibase : SchnorrSecp256k1Multikey.encode(pubKeyBytes)
+          publicKeyMultibase : Bip340MultikeyUtils.encode(xOnlyPublicKey)
         }],
-        service : DidBtc1Utils.generateBeaconServices({ pubKeyBytes, network: btcnetwork })
+        service : DidBtc1Utils.generateBeaconServices({ publicKey, network: btcnetwork })
       }
     };
   }
@@ -120,19 +126,15 @@ export class Btc1Create {
 
     // Sha256 hash the canonicalized byte array of the intermediateDocument
     const genesisBytes = sha256(Buffer.from(canonicalize(intermediateDocument)));
-
     // Set idType to external
     const idType = 'external';
-
     // Set did to result of createIdentifier
     const did = this.identifier({ idType, genesisBytes, version, network });
 
     // Create copy of intermediateDocument initialDocument as DidDocument
     const initialDocument = intermediateDocument as Btc1DidDocument;
-
     // Set initialDocument id to did.
     initialDocument.id = did;
-
     // Set verificationMethod.controller to did.
     initialDocument.verificationMethod = verificationMethod.map(
       (vm: DidVerificationMethod) => ({ ...vm, controller: intermediateDocument.id })
