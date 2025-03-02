@@ -13,6 +13,7 @@ import { Btc1Read } from './crud/read.js';
 import { Btc1Update } from './crud/update.js';
 import DidBtc1Utils from './did-btc1-utils.js';
 import {
+  Btc1DidDocument,
   Btc1Networks,
   CreateResponse,
   DidBtc1CreateParams,
@@ -27,28 +28,29 @@ import { DidBtc1Error } from './utils/errors.js';
 initEccLib(tinysecp);
 
 /**
- * @class
- * @name DidBtc1
+ * Implements {@link https://dcdpr.github.io/did-btc1 | did:btc1 DID Method Specification}
+ * @export
+ * @class DidBtc1
+ * @type {DidBtc1}
  * @implements {DidMethod}
- * @description Implementation of the `did:btc1` DID method
- * @see {@link https://dcdpr.github.io/did-btc1/}
  */
 export class DidBtc1 implements DidMethod {
-  /** Name of the DID method, as defined in the DID BTC1 specification */
-  public static methodName = 'btc1';
+  /** @type {string} Name of the DID method, as defined in the DID BTC1 specification */
+  public static methodName: string = 'btc1';
 
   /**
-   * @static @async @method
-   * @name create
-   * @description Create a new `did:btc1` identifier from a set of parameters
+   * Create a new `did:btc1` identifier from a set of parameters
+   * @static
+   * @async
    * @param {DidBtc1CreateParams} params Required parameters for the create operation
-   * @param {PublicKeyBytes} params.pubKeyBytes Public key byte array used to create a btc1 "key" identifier
+   * @param {PublicKeyBytes} params.publicKey Public key byte array used to create a btc1 "key" identifier
    * @param {IntermediateDocument} params.intermediateDocument DID Document used to create a btc1 "external" identifier
    * @param {DidBtc1CreateOptions} params.options Optional parameters for the create operation
    * @param {string} params.options.idType Type of identifier to create (key or external)
    * @param {string} params.options.version Version number of the btc1 method (1, 2, 3, etc.)
    * @param {string} params.options.network Bitcoin network name (mainnet, testnet, signet, regtest)
-   * @returns {CreateResponse} Promise resolving to an object containing the created DID and DID Document
+   * @returns {Promise<CreateResponse>}
+   * @throws {DidBtc1Error} if any of the param checks fail
    */
   static async create({
     publicKey,
@@ -109,9 +111,10 @@ export class DidBtc1 implements DidMethod {
   }
 
   /**
-   * @static @async @method
-   * @name resolve
-   * @description Resolve a `did: btc1` identifier to its corresponding DID document
+   * Entry point for section {@link https://dcdpr.github.io/did-btc1/#read | 4.2 Read} of the did:btc1 specification.
+   * Resolves a did:btc1 identifier to its corresponding DID document
+   * @static
+   * @async
    * @param {string} identifier The DID to be resolved
    * @param {DidResolutionOptions} options Optional parameters for the resolution operation
    * @param {Btc1DidDocument} options.sidecarData.initialDocument User-provided, offline DID Document to resolve sidecar
@@ -120,8 +123,7 @@ export class DidBtc1 implements DidMethod {
    * @throws {DidError} with {@link DidErrorCode.InvalidDid} if the identifier is invalid
    * @example
    * ```ts
-   * const did = 'did:btc1:k1q0dygyp3gz969tp46dychzy4q78c2k3js68kvyr0shanzg67jnuez2cfplh';
-   * const resolutionResult = await DidBtc1.resolve(did);
+   * const resolution = await DidBtc1.resolve('did:btc1:k1q0dygyp3gz969tp46dychzy4q78c2k3js68kvyr0shanzg67jnuez2cfplh')
    * ```
    */
   static async resolve(identifier: string, options: DidBtc1ResolutionOptions = {}): Promise<DidResolutionResult> {
@@ -131,11 +133,12 @@ export class DidBtc1 implements DidMethod {
       const { hrp, genesisBytes, version, network, } = identifierComponents;
 
       // Set the default resolution result
-      const didResolutionResult = {
+      const didResolutionResult: DidResolutionResult = {
         '@context'            : 'https://w3id.org/did-resolution/v1',
         didResolutionMetadata : {},
-        didDocumentMetadata   : {}
-      } as DidResolutionResult;
+        didDocumentMetadata   : {},
+        didDocument           : {} as Btc1DidDocument
+      };
 
       //  Make sure options.sidecarData is not null if hrp === x
       if (hrp === 'x' && !options.sidecarData) {
@@ -143,9 +146,9 @@ export class DidBtc1 implements DidMethod {
       }
 
       // Resolve the DID Document based on the hrp
-      const initialDocument = hrp === 'x'
-        ? await Btc1Read.external({ identifier, identifierComponents, options })
-        : Btc1Read.deterministic({ version, network, publicKey: genesisBytes });
+      const initialDocument = hrp === 'k'
+        ? Btc1Read.deterministic({ identifier, identifierComponents })
+        : await Btc1Read.external({ identifier, identifierComponents, options });
 
       didResolutionResult.didDocument = await Btc1Read.targetDocument({ initialDocument, options });
       // Return the resolved DID Document
@@ -167,9 +170,10 @@ export class DidBtc1 implements DidMethod {
   }
 
   /**
-   * @static @async @method
-   * @name update
-   * @description Update a `did: btc1` DID Document with a JSON patch
+   * Entry point for section {@link https://dcdpr.github.io/did-btc1/#read | 4.3 Update} of the did:btc1 specification.
+   * Update a `did: btc1` DID Document using a JSON patch and announces the update using beacon signals.
+   * @static
+   * @async
    * @param {UpdateParams} params Required parameters for the update operation
    * @param {string} params.identifier The DID to be updated
    * @param {Btc1DidDocument} params.sourceDocument The source document to be updated
@@ -179,8 +183,8 @@ export class DidBtc1 implements DidMethod {
    * @param {string[]} params.beaconIds The beacon IDs to announce the update
    * @param {ProofOptions} params.options Optional parameters for the update operation
    * @returns {Promise<void>} Promise resolving to void
-   * @throws {DidError} with {@link DidErrorCode.InvalidDidDocument} if the publicKeyMultibase is malformed
-   * or if the verificationMethod type is not Multikey
+   * @throws {DidError} with {@link DidErrorCode.InvalidDidDocument} if the publicKeyMultibase is malformed or the
+   * verificationMethod type is not Multikey
    */
   static async update({
     identifier,

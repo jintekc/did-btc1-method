@@ -197,7 +197,10 @@ export type ReadIdentifierParams = RequireOnly<DidBtc1CreateOptions, 'network' &
 }
 export type CreateDeterministic = Required<Pick<DidBtc1CreateOptions, 'network' | 'version'> & Pick<DidBtc1CreateParams, 'publicKey'>>;
 export type CreateExternal = Required<Pick<DidBtc1CreateOptions, 'network' | 'version'> & Pick<DidBtc1CreateParams, 'intermediateDocument'>>;
-export type ReadDeterministic = CreateDeterministic;
+export type ReadDeterministic = {
+    identifier: string;
+    identifierComponents: Btc1IdentifierComponents;
+};
 
 export type Prefix = 'x' | 'k';
 export type Bech32Encoding = `${Prefix}1${string}`;

@@ -42,9 +42,29 @@ export class Btc1Read {
    * @param {Uint8Array} params.publicKey The public key bytes used for the identifier
    * @returns {Btc1DidDocument} The resolved DID Document object
    */
-  static deterministic({ version, network, publicKey }: ReadDeterministic): Btc1DidDocument {
-    return Btc1Create.deterministic({ version, network, publicKey }).initialDocument;
+  static deterministic({ identifier, identifierComponents }: ReadDeterministic): Btc1DidDocument {
+    const { version, network, genesisBytes } = identifierComponents;
+    return {
+      '@context' : [
+        'https://www.w3.org/ns/did/v1',
+        'https://w3id.org/security/multikey/v1',
+        'https://github.com/dcdpr/did-btc1'
+      ],
+      id                   : identifier,
+      authentication       : ['#initialKey'],
+      assertionMethod      : ['#initialKey'],
+      capabilityInvocation : ['#initialKey'],
+      capabilityDelegation : ['#initialKey'],
+      verificationMethod   : [{
+        id                 : '#initialKey',
+        type               : 'Multikey',
+        controller         : identifier,
+        publicKeyMultibase : MultikeyUtils.encode(xOnlyPublicKey)
+      }],
+      service : DidBtc1Utils.generateBeaconServices({ publicKey, network: btcnetwork })
+    };
   }
+  // version, network, publicKey: genesisBytes
 
   /**
    * @static @async @method

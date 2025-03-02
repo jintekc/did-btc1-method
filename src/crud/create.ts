@@ -16,7 +16,7 @@ import {
   CreateResponse,
   IntermediateVerificationMethod
 } from '../types/btc1.js';
-import { Bip340MultikeyUtils } from '@did-btc1/key-manager';
+import { MultikeyUtils } from '@did-btc1/key-manager';
 
 /**
  * Implements section {@link https://dcdpr.github.io/did-btc1/#create | 4.1 Create} of the
@@ -55,7 +55,7 @@ export class Btc1Create {
           'https://w3id.org/security/multikey/v1',
           'https://github.com/dcdpr/did-btc1'
         ],
-        id                   : did,
+        id                   : identifier,
         authentication       : ['#initialKey'],
         assertionMethod      : ['#initialKey'],
         capabilityInvocation : ['#initialKey'],
