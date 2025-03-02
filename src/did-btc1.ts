@@ -61,7 +61,7 @@ export class DidBtc1 implements DidMethod {
 
     // Options Check 1: Validate that one of pubKeyBytes or intermediateDocument is not null
     if (!publicKey && !intermediateDocument) {
-      throw new DidBtc1Error('Invalid param: publicKey or intermediateDocument required');
+      throw new DidBtc1Error('Invalid param-option: publicKey or intermediateDocument required');
     }
 
     // Set default idType based on data passed
@@ -72,7 +72,7 @@ export class DidBtc1 implements DidMethod {
 
     // Options Check 2: Validate that the idType is set to either key or external
     if (!(idType in DidBtc1IdTypes)) {
-      throw new DidBtc1Error('Invalid option: idType required, must be key or external');
+      throw new DidBtc1Error('Invalid param-option: idType required, must be key or external');
     }
 
     // Options Check 3: Validate pubKeybytes exists if idType = key
@@ -91,12 +91,12 @@ export class DidBtc1 implements DidMethod {
 
     // Options Check 5: Validate network in Btc1Networks if not null
     if (!(network in Btc1Networks)) {
-      throw new DidBtc1Error('Invalid option: network required, must be mainnet, testnet, signet or regtest');
+      throw new DidBtc1Error('Invalid param-option: network required, must be mainnet, testnet, signet or regtest');
     }
 
     // Options Check 6: Validate version as positive number if not null
     if (isNaN(Number(version))) {
-      throw new DidBtc1Error('Invalid option: version required, must be positive number');
+      throw new DidBtc1Error('Invalid param-option: version required, must be positive number');
     }
 
     publicKey = publicKey!;
