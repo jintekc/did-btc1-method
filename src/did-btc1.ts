@@ -6,55 +6,60 @@ import {
   DidMethod,
   EMPTY_DID_RESOLUTION_RESULT
 } from '@web5/dids';
-import { initEccLib } from 'bitcoinjs-lib';
+import { initEccLib, networks } from 'bitcoinjs-lib';
 import * as tinysecp from 'tiny-secp256k1';
-import { Btc1Create } from './crud/create.js';
-import { Btc1Read } from './crud/read.js';
-import { Btc1Update } from './crud/update.js';
-import DidBtc1Utils from './did-btc1-utils.js';
-import {
-  Btc1Networks,
-  CreateResponse,
-  DidBtc1CreateParams,
-  DidBtc1IdTypes,
-  DidBtc1ResolutionOptions,
-  GetSigningMethod,
-  UpdateParams
-} from './types/btc1.js';
-import { DidBtc1Error } from './utils/errors.js';
+import { getNetwork } from './bitcoin/network.js';
+import { Btc1Create } from './btc1/crud/create.js';
+import { Btc1DidDocument } from './btc1/did-document.js';
+import { DidCreateParams, DidCreateResponse, DidResolutionOptions, DidUpdateParams } from './btc1/interface.js';
+import { Btc1Read } from './btc1/crud/read.js';
+import { Btc1Update } from './btc1/crud/update.js';
+import { Btc1Utils } from './btc1/utils.js';
+import { DidBtc1Error } from './utils/error.js';
+import { Btc1Networks, DidBtc1IdTypes } from './btc1/types.js';
+
+export type GetSigningMethodParams = {
+  didDocument: Btc1DidDocument;
+  methodId?: string;
+}
 
 /** initEccLib */
 initEccLib(tinysecp);
 
 /**
- * @class
- * @name DidBtc1
+ * Implements {@link https://dcdpr.github.io/did-btc1 | did:btc1 DID Method Specification}
+ * @export
+ * @class DidBtc1
+ * @type {DidBtc1}
  * @implements {DidMethod}
- * @description Implementation of the `did:btc1` DID method
- * @see {@link https://dcdpr.github.io/did-btc1/}
  */
 export class DidBtc1 implements DidMethod {
-  /** Name of the DID method, as defined in the DID BTC1 specification */
-  public static methodName = 'btc1';
+  /** @type {string} Name of the DID method, as defined in the DID BTC1 specification */
+  public static methodName: string = 'btc1';
+
+  /** @type {networks.Network} networks.Network object */
+  public static network: networks.Network = networks.bitcoin;
 
   /**
-   * @static @async @method
-   * @name create
-   * @description Create a new `did:btc1` identifier from a set of parameters
-   * @param {DidBtc1CreateParams} params Required parameters for the create operation
-   * @param {PublicKeyBytes} params.pubKeyBytes Public key byte array used to create a btc1 "key" identifier
+   * Create a new `did:btc1` identifier from a set of parameters. Implements {@link IDidBtc1.create}
+   * @public
+   * @static
+   * @async
+   * @param {DidCreateParams} params Required parameters for the create operation
+   * @param {PublicKeyBytes} params.publicKey Public key byte array used to create a btc1 "key" identifier
    * @param {IntermediateDocument} params.intermediateDocument DID Document used to create a btc1 "external" identifier
-   * @param {DidBtc1CreateOptions} params.options Optional parameters for the create operation
+   * @param {DidCreateParamsOptions} params.options Optional parameters for the create operation
    * @param {string} params.options.idType Type of identifier to create (key or external)
    * @param {string} params.options.version Version number of the btc1 method (1, 2, 3, etc.)
    * @param {string} params.options.network Bitcoin network name (mainnet, testnet, signet, regtest)
-   * @returns {CreateResponse} Promise resolving to an object containing the created DID and DID Document
+   * @returns {Promise<CreateResponse>} Promise resolving to a CreateResponse object
+   * @throws {DidBtc1Error} if any of the param checks fail
    */
-  static async create({
+  public static async create({
     publicKey,
     intermediateDocument,
     options = {}
-  }: DidBtc1CreateParams): Promise<CreateResponse> {
+  }: DidCreateParams): Promise<DidCreateResponse> {
     // Set the default version and network
     options.version ??= '1';
     options.network ??= 'mainnet';
@@ -99,6 +104,7 @@ export class DidBtc1 implements DidMethod {
       throw new DidBtc1Error('Invalid param-option: version required, must be positive number');
     }
 
+    this.network = getNetwork(options.network);
     publicKey = publicKey!;
     intermediateDocument = intermediateDocument!;
 
@@ -109,9 +115,11 @@ export class DidBtc1 implements DidMethod {
   }
 
   /**
-   * @static @async @method
-   * @name resolve
-   * @description Resolve a `did: btc1` identifier to its corresponding DID document
+   * Entry point for section {@link https://dcdpr.github.io/did-btc1/#read | 4.2 Read} of the did:btc1 specification.
+   * Resolves a did:btc1 identifier to its corresponding DID document
+   * @public
+   * @static
+   * @async
    * @param {string} identifier The DID to be resolved
    * @param {DidResolutionOptions} options Optional parameters for the resolution operation
    * @param {Btc1DidDocument} options.sidecarData.initialDocument User-provided, offline DID Document to resolve sidecar
@@ -120,22 +128,18 @@ export class DidBtc1 implements DidMethod {
    * @throws {DidError} with {@link DidErrorCode.InvalidDid} if the identifier is invalid
    * @example
    * ```ts
-   * const did = 'did:btc1:k1q0dygyp3gz969tp46dychzy4q78c2k3js68kvyr0shanzg67jnuez2cfplh';
-   * const resolutionResult = await DidBtc1.resolve(did);
+   * const resolution = await DidBtc1.resolve('did:btc1:k1q0dygyp3gz969tp46dychzy4q78c2k3js68kvyr0shanzg67jnuez2cfplh')
    * ```
    */
-  static async resolve(identifier: string, options: DidBtc1ResolutionOptions = {}): Promise<DidResolutionResult> {
+  public static async resolve(identifier: string, options: DidResolutionOptions = {}): Promise<DidResolutionResult> {
     try {
       // Parse the identifier into its components
-      const identifierComponents = DidBtc1Utils.parse(identifier);
-      const { hrp, genesisBytes, version, network, } = identifierComponents;
+      const components = Btc1Utils.parse(identifier);
+      const { hrp } = components;
 
-      // Set the default resolution result
-      const didResolutionResult = {
-        '@context'            : 'https://w3id.org/did-resolution/v1',
-        didResolutionMetadata : {},
-        didDocumentMetadata   : {}
-      } as DidResolutionResult;
+      if(!['k', 'x'].includes(hrp)) {
+        throw new DidError(DidErrorCode.InvalidDid, 'Invalid DID hrp');
+      }
 
       //  Make sure options.sidecarData is not null if hrp === x
       if (hrp === 'x' && !options.sidecarData) {
@@ -143,9 +147,17 @@ export class DidBtc1 implements DidMethod {
       }
 
       // Resolve the DID Document based on the hrp
-      const initialDocument = hrp === 'x'
-        ? await Btc1Read.external({ identifier, identifierComponents, options })
-        : Btc1Read.deterministic({ version, network, publicKey: genesisBytes });
+      const initialDocument = hrp === 'k'
+        ? Btc1Read.deterministic({ identifier, components })
+        : await Btc1Read.external({ identifier, components, options });
+
+      // Set the default resolution result
+      const didResolutionResult: DidResolutionResult = {
+        '@context'            : 'https://w3id.org/did-resolution/v1',
+        didResolutionMetadata : {},
+        didDocumentMetadata   : {},
+        didDocument           : {} as Btc1DidDocument
+      };
 
       didResolutionResult.didDocument = await Btc1Read.targetDocument({ initialDocument, options });
       // Return the resolved DID Document
@@ -167,10 +179,11 @@ export class DidBtc1 implements DidMethod {
   }
 
   /**
-   * @static @async @method
-   * @name update
-   * @description Update a `did: btc1` DID Document with a JSON patch
-   * @param {UpdateParams} params Required parameters for the update operation
+   * Entry point for section {@link https://dcdpr.github.io/did-btc1/#read | 4.3 Update} of the did:btc1 specification.
+   * Update a `did: btc1` DID Document using a JSON patch and announces the update using beacon signals.
+   * @static
+   * @async
+   * @param {DidUpdateParams} params Required parameters for the update operation
    * @param {string} params.identifier The DID to be updated
    * @param {Btc1DidDocument} params.sourceDocument The source document to be updated
    * @param {string} params.sourceVersionId The versionId of the source document
@@ -179,8 +192,8 @@ export class DidBtc1 implements DidMethod {
    * @param {string[]} params.beaconIds The beacon IDs to announce the update
    * @param {ProofOptions} params.options Optional parameters for the update operation
    * @returns {Promise<void>} Promise resolving to void
-   * @throws {DidError} with {@link DidErrorCode.InvalidDidDocument} if the publicKeyMultibase is malformed
-   * or if the verificationMethod type is not Multikey
+   * @throws {DidError} with {@link DidErrorCode.InvalidDidDocument} if the publicKeyMultibase is malformed or the
+   * verificationMethod type is not Multikey
    */
   static async update({
     identifier,
@@ -190,9 +203,9 @@ export class DidBtc1 implements DidMethod {
     verificationMethodId,
     beaconIds,
     options
-  }: UpdateParams): Promise<void> {
+  }: DidUpdateParams): Promise<void> {
     // Construct an unsigned update payload
-    const updatePayload = Btc1Update.constructPayload({
+    const updatePayload = await Btc1Update.constructPayload({
       identifier,
       documentPatch,
       sourceDocument,
@@ -200,12 +213,12 @@ export class DidBtc1 implements DidMethod {
     });
     const didDocument = sourceDocument;
     // Get the sourceDocument verificationMethods and filter for the verificationMethodId passed
-    const verificationMethod = DidBtc1Utils.getVerificationMethods({ didDocument }).filter(
+    const verificationMethod = Btc1Utils.getVerificationMethods({ didDocument }).filter(
       vm => vm.id === verificationMethodId
     )?.[0];
     // Validate the verificationMethod type is Multikey
     if (verificationMethod.type !== 'Multikey') {
-      throw new DidError(DidErrorCode.InvalidDidDocument, 'Verification method must be of type Multikey');
+      throw new DidError(DidErrorCode.InvalidDidDocument, 'Verification method must be type Multikey');
     }
     // Validate the first 4 chars as z66P of the verificationMethod publicKeyMultibase
     if (verificationMethod.publicKeyMultibase?.slice(0, 4) !== 'z66P') {
@@ -216,22 +229,21 @@ export class DidBtc1 implements DidMethod {
   }
 
   /**
-   * @static @async @method
-   * @name getSigningMethod
-   * @summary Given the W3C DID Document of a `did: btc1` DID, return the verification signing method used
-   * @description
-   * Given the W3C DID Document of a `did: btc1` DID, return the verification method that will be used
-   * for signing messages and credentials. If given, the `methodId` parameter is used to select the
-   * verification method. If not given, the Identity Key's verification method with an ID fragment
-   * of '#initialKey' is used.
-   * @param {GetSigningMethod} params The parameters for the `getSigningMethod` operation
+   * @static
+   * @async
+   Given the W3C DID Document of a `did:btc1` identifier, return the signing verification method that will be used
+   for signing messages and credentials. If given, the `methodId` parameter is used to select the
+   verification method. If not given, the Identity Key's verification method with an ID fragment
+   of '#initialKey' is used. signing method used
+
+   * @param {GetSigningMethodParams} params The parameters for the `getSigningMethod` operation
    * @param {DidDocument} params.didDocument DID Document to get the verification method from
    * @param {string} params.methodId Optional ID of the verification method to use for signing
    * @returns {DidVerificationMethod} Promise resolving to the verification method used for signing
    * @throws {DidError} with {@link DidErrorCode.InternalError} if an error occurs during getSigningMethod
    * or with {@link DidErrorCode.MethodNotSupported} if signing method could not be determined
    */
-  static async getSigningMethod({ didDocument, methodId }: GetSigningMethod): Promise<DidVerificationMethod> {
+  static async getSigningMethod({ didDocument, methodId }: GetSigningMethodParams): Promise<DidVerificationMethod> {
     methodId ??= '#initialKey';
     // Verify the DID method is supported.
     const parsedDid = Did.parse(didDocument.id);
@@ -241,8 +253,8 @@ export class DidBtc1 implements DidMethod {
     // Attempt to find a verification method that matches the given method ID, or if not given,
     // find the first verification method intended for signing claims.
     const verificationMethod = didDocument.verificationMethod?.find(
-      vm => DidBtc1Utils.extractDidFragment(vm.id) === (DidBtc1Utils.extractDidFragment(methodId)
-        ?? DidBtc1Utils.extractDidFragment(didDocument.assertionMethod?.[0]))
+      (vm: DidVerificationMethod) => Btc1Utils.extractDidFragment(vm.id) === (Btc1Utils.extractDidFragment(methodId)
+        ?? Btc1Utils.extractDidFragment(didDocument.assertionMethod?.[0]))
     );
     if (!(verificationMethod && verificationMethod.publicKeyMultibase)) {
       throw new DidError(

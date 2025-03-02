@@ -25,16 +25,8 @@ declare global {
     }
 }
 
-Object.defineProperty(Array.prototype, '-1', {
-  get() {
-    return this[this.length - 1];
-  },
-  enumerable   : false,
-  configurable : true
-});
-
 Array.prototype.last = function <T>(): T | undefined {
-  return this[this.length - 1];
+  return this[this.length - 1] ?? undefined;
 };
 
 JSON.is = function (unknown: Maybe<JSONObject>): boolean {
