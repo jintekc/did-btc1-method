@@ -6,8 +6,11 @@ import { generateMnemonic, mnemonicToSeed } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import { canonicalize } from '@web5/crypto';
 import { JSONObject } from '../exts.js';
-import { KeyPair } from '../types/btc1.js';
+import { KeyPair, PublicKeyBytes } from '../types/btc1.js';
 import { HdWallet } from '../types/crypto.js';
+import { base58btc } from 'multiformats/bases/base58';
+
+export const SECP256K1_XONLY_PREFIX: Uint8Array = new Uint8Array([0xe1, 0x4a]);
 
 /**
  * Static class of general utility functions for the did-btc1 spec implementation
@@ -15,6 +18,21 @@ import { HdWallet } from '../types/crypto.js';
  * @type {GeneralUtils}
  */
 export class GeneralUtils {
+  /**
+     * @static Helper function to encode a secp256k1 key in SchnorrSecp256k1 Multikey Format
+     * @param {PublicKeyBytes} xOnlyPublicKeyBytes
+     * @returns {PublicKeyMultibase}
+     */
+  public static encode(xOnlyPublicKeyBytes: PublicKeyBytes): string {
+    if (xOnlyPublicKeyBytes.length !== 32) {
+      throw new Error('x-only public key must be 32 bytes');
+    }
+    // Set the prefix and the public key bytes
+    const multikeyBytes = new Uint8Array([...Array.from(SECP256K1_XONLY_PREFIX), ...Array.from(xOnlyPublicKeyBytes)]);
+    // Encode the public key as a multibase base58btc string
+    return base58btc.encode(multikeyBytes);
+  }
+
   /**
    * Converts a bigint to a buffer
    * @static

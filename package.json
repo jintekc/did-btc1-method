@@ -34,7 +34,10 @@
         "test:browser": "pnpm build:tests:browser && web-test-runner",
         "build:test": "pnpm build && pnpm build:tests:node && pnpm test:node",
         "build:lint:test": "pnpm build && pnpm build:tests:node && pnpm lint:fix",
-        "prepublish": "pnpm build"
+        "prepublish": "pnpm build",
+        "version": "pnpm version",
+        "version:no-git": "pnpm version --no-commit-hooks --no-git-tag-version",
+        "version:new": "git checkout -b $NEW_VERSION && git tag $NEW_VERSION && pnpm version:no-git $NEW_VERSION"
     },
     "homepage": "https://github.com/jintekc/did-btc1-js",
     "bugs": {

@@ -1,4 +1,3 @@
-import { KeyPair } from '../src/utils/keypair.js';
 import { DidBtc1 } from '../src/did-btc1.js';
 // import { versions, networks, idTypes } from '../tests/test-data.js';
 // const idType = idTypes.key;
@@ -16,18 +15,21 @@ import { DidBtc1 } from '../src/did-btc1.js';
   127, 149,  41, 206, 136,  64, 201,  42
 ]
 */
-const privateKey = new Uint8Array([
-  189,  38, 143, 201, 181, 132,  46,
-  71, 232,  89, 206, 136, 196, 208,
-  94, 153, 101, 219, 165,  94, 235,
-  242,  29, 164, 176, 161,  99, 193,
-  209,  97,  23, 158
+const publicKey = new Uint8Array([
+  2, 154, 213, 246, 168,  93,  39, 238,
+  105, 177,  51, 174, 210, 115, 180, 242,
+  245, 215,  14, 212, 167,  22, 117,   1,
+  156,  26, 118, 240,  76, 102,  53,  38,
+  239
 ]);
-const keypair = new KeyPair(privateKey);
-console.log('keypair', keypair);
-console.log('Creating BTC1 Identifier with publicKey:', keypair.publicKey);
+if(!publicKey) {
+  throw new Error('Failed to generate public key from private key');
+}
+// const keypair = new KeyPair(privateKey);
+// console.log('keypair', keypair);
+console.log('Creating BTC1 Identifier with publicKey:', publicKey);
 
-const response = await DidBtc1.create({ publicKey: keypair.publicKey });
+const response = await DidBtc1.create({ publicKey });
 const clean = JSON.stringify(response, null, 4);
 console.log('Created BTC1 Identifier and Initial Document:', clean);
 
