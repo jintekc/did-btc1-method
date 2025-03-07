@@ -8,10 +8,10 @@ import {
 } from '@web5/dids';
 import { initEccLib } from 'bitcoinjs-lib';
 import * as tinysecp from 'tiny-secp256k1';
-import { Btc1Create } from './crud/create.js';
-import { Btc1Read } from './crud/read.js';
-import { Btc1Update } from './crud/update.js';
-import DidBtc1Utils from './did-btc1-utils.js';
+import { Btc1Create } from './btc1/create.js';
+import { Btc1Read } from './btc1/read.js';
+import { Btc1Update } from './btc1/update.js';
+import DidBtc1Utils from './btc1/utils/btc1.js';
 import {
   Btc1DidDocument,
   Btc1Networks,
@@ -22,7 +22,7 @@ import {
   GetSigningMethod,
   UpdateParams
 } from './types/btc1.js';
-import { DidBtc1Error } from './utils/errors.js';
+import { DidBtc1Error } from './btc1/utils/errors.js';
 
 /** initEccLib */
 initEccLib(tinysecp);

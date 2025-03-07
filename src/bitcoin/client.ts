@@ -1,6 +1,6 @@
 import { default as Client } from 'bitcoin-core';
 import '../exts.js';
-import { DEFAULT_CLIENT_CONFIG } from '../constants/bitcoind.js';
+import { DEFAULT_CLIENT_CONFIG } from '../constants/bitcoin.js';
 import BitcoindClientError from './error.js';
 import IBitcoinClient from './interface.js';
 import {

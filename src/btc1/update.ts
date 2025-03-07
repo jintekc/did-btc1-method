@@ -13,9 +13,9 @@ import {
   ProofOptions,
   UpdatePayload
 } from '../types/btc1.js';
-import { DidBtc1Error } from '../utils/errors.js';
-import { GeneralUtils } from '../utils/general.js';
-import JsonPatch from '../utils/json-patch.js';
+import { DidBtc1Error } from './utils/errors.js';
+import { GeneralUtils } from './utils/general.js';
+import JsonPatch from './utils/json-patch.js';
 
 /**
  * Implements the {@link https://dcdpr.github.io/did-btc1/#update | Update} section of the

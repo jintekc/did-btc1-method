@@ -1,4 +1,4 @@
-import { Bip340MultikeyUtils } from '@did-btc1/key-manager';
+import { PublicKeyUtils } from '@did-btc1/bip340-2025-cryptosuite';
 import { initEccLib, payments } from 'bitcoinjs-lib';
 import * as ecc from 'tiny-secp256k1';
 import { BtcNetworks } from '../src/types/btc1.js';
@@ -31,7 +31,7 @@ const document = {
       id                 : '#initialKey',
       type               : 'Multikey',
       controller         : 'did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-      publicKeyMultibase : Bip340MultikeyUtils.encode(publicKey.slice(1, 33)),
+      publicKeyMultibase : PublicKeyUtils.encode(publicKey.slice(1, 33)),
     }],
     service : [
       {

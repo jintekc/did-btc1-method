@@ -5,9 +5,9 @@ import { HDKey } from '@scure/bip32';
 import { generateMnemonic, mnemonicToSeed } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import { canonicalize } from '@web5/crypto';
-import { JSONObject } from '../exts.js';
-import { KeyPair, PublicKeyBytes } from '../types/btc1.js';
-import { HdWallet } from '../types/crypto.js';
+import { JSONObject } from '../../exts.js';
+import { KeyPair, PublicKeyBytes } from '../../types/btc1.js';
+import { HdWallet } from '../../types/crypto.js';
 import { base58btc } from 'multiformats/bases/base58';
 
 export const SECP256K1_XONLY_PREFIX: Uint8Array = new Uint8Array([0xe1, 0x4a]);

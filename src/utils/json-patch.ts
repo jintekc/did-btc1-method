@@ -24,27 +24,28 @@ export default class JsonPatch {
           JsonPatch.setValue(patchedDocument, segments, value);
           break;
 
-        case 'move':
+        case 'move':{
           if (!from) throw new Error('Missing \'from\' in move operation');
           const fromSegments = from.split('/').slice(1);
           const movedValue = JsonPatch.getValue(patchedDocument, fromSegments);
           JsonPatch.removeValue(patchedDocument, fromSegments);
           JsonPatch.setValue(patchedDocument, segments, movedValue);
           break;
-
-        case 'copy':
+        }
+        case 'copy':{
           if (!from) throw new Error('Missing \'from\' in copy operation');
           const copiedValue = JsonPatch.getValue(patchedDocument, from.split('/').slice(1));
           JsonPatch.setValue(patchedDocument, segments, copiedValue);
           break;
 
-        case 'test':
+        }
+        case 'test':{
           const existingValue = JsonPatch.getValue(patchedDocument, segments);
           if (JSON.stringify(existingValue) !== JSON.stringify(value)) {
             throw new Error(`Test operation failed at path: ${path}`);
           }
           break;
-
+        }
         default:
           throw new Error(`Unsupported JSON Patch operation: ${op}`);
       }

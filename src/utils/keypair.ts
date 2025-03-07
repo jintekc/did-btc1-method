@@ -1,5 +1,5 @@
 import { getPublicKey, utils } from '@noble/secp256k1';
-import { Bytes } from '../types/btc1.js';
+import { Bytes } from '../../types/btc1.js';
 
 export class KeyPair {
   public type: string = 'secp256k1';

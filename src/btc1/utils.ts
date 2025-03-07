@@ -8,20 +8,20 @@ import {
   DidVerificationRelationship
 } from '@web5/dids';
 import { payments } from 'bitcoinjs-lib';
-import { DidBtc1 } from './did-btc1.js';
-import { DidBtc1Error } from './utils/errors.js';
+import { DidBtc1 } from '../did-btc1.js';
+import { DidBtc1Error } from '../utils/errors.js';
 import {
   BeaconServiceParams,
   BeaconServicesParams,
   Btc1IdentifierComponents,
   Btc1Networks,
   GenerateBitcoinAddrs,
-} from './types/btc1.js';
+} from '../types/btc1.js';
 
 /**
  * Utility functions for the {@link https://dcdpr.github.io/did-btc1/ | DID BTC1} TS implementation
  */
-class DidBtc1Utils {
+export class DidBtc1Utils {
   /**
    * @static @method
    * @name parse
@@ -283,5 +283,3 @@ class DidBtc1Utils {
     };
   }
 }
-
-export default DidBtc1Utils;

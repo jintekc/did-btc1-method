@@ -224,7 +224,7 @@ export type Signature = Bytes;
 export type Hex = Bytes | string;
 export type PrivateKey = Bytes;
 export type PublicKey = Bytes;
-export type KeyPair = {
+export type KeyPairType = {
   privateKey: PrivateKey;
   publicKey: PublicKey
 };

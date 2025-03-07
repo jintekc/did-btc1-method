@@ -7,9 +7,9 @@ import { createHelia } from 'helia';
 import { CID } from 'multiformats/cid';
 import * as Digest from 'multiformats/hashes/digest';
 import Bitcoind from '../bitcoin/client.js';
-import { DEFAULT_BLOCK_CONFIRMATIONS } from '../constants/bitcoind.js';
+import { DEFAULT_BLOCK_CONFIRMATIONS } from '../constants/bitcoin.js';
 import { ID_PLACEHOLDER_VALUE } from '../constants/btc1.js';
-import DidBtc1Utils from '../did-btc1-utils.js';
+import DidBtc1Utils from './utils/btc1.js';
 import { TargetBlockHeight } from '../types/bitcoind.js';
 import {
   Btc1DidDocument,
@@ -21,8 +21,8 @@ import {
   TraverseBlockchainParams,
   UnixTimestamp
 } from '../types/btc1.js';
-import { DidBtc1Error } from '../utils/errors.js';
-import { GeneralUtils } from '../utils/general.js';
+import { DidBtc1Error } from './utils/errors.js';
+import { GeneralUtils } from './utils/general.js';
 import { Btc1Create } from './create.js';
 
 /**
