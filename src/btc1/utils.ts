@@ -21,11 +21,11 @@ import {
 /**
  * Utility functions for the {@link https://dcdpr.github.io/did-btc1/ | DID BTC1} TS implementation
  */
-export class DidBtc1Utils {
+export class Btc1Utils {
   /**
-   * @static @method
+   * Parses a `did:btc1` identifier into its components
+   * @static
    * @name parse
-   * @description Parses a `did:btc1` identifier into its components
    * @param {string} identifier The BTC1 DID to be parsed
    * @returns {Btc1IdentifierComponents} The parsed identifier components
    * @throws {DidError} if an error occurs while parsing the identifier
@@ -120,9 +120,9 @@ export class DidBtc1Utils {
   }
 
   /**
-   * @static @method
+   * Extracts a DID fragment from a given input
+   * @static
    * @name extractDidFragment
-   * @description Extracts a DID fragment from a given input
    * @param {unknown} input The input to extract the DID fragment from
    * @returns {string | undefined} The extracted DID fragment or undefined if not found
    */
@@ -133,9 +133,9 @@ export class DidBtc1Utils {
   }
 
   /**
-   * @static @method
+   * Validates that the given object is a DidVerificationMethod
+   * @static
    * @name isDidVerificationMethod
-   * @description Validates that the given object is a DidVerificationMethod
    * @param {unknown} obj The object to validate
    * @returns {boolean} A boolean indicating whether the object is a DidVerificationMethod
    */
@@ -154,9 +154,9 @@ export class DidBtc1Utils {
   }
 
   /**
-   * @static @method
+   * Validates that the given object is a DidService
+   * @static
    * @name isDidService
-   * @description Validates that the given object is a DidService
    * @param {unknown} obj The object to validate
    * @returns {boolean} A boolean indicating whether the object is a DidService
    */
@@ -171,10 +171,21 @@ export class DidBtc1Utils {
     return true;
   }
 
+
   /**
-   * @static @method
+   * Validates that the given object is a Beacon Service
+   * @static
+   * @param {DidService} obj The object to validate
+   * @returns {boolean} A boolean indicating whether the object is a Beacon Service
+   */
+  static isBeaconService(obj: DidService): boolean {
+    return obj.type === 'SingletonBeacon' || obj.type === 'CIDAggregateBeacon' || obj.type === 'SMTAggregateBeacon';
+  }
+
+  /**
+   * Extracts the verification methods from a given DID Document
+   * @static
    * @name getVerificationMethods
-   * @description Extracts the verification methods from a given DID Document
    * @param {DidDocument} didDocument The DID Document to extract the verification methods from
    * @returns {DidVerificationMethod[]} An array of DidVerificationMethod objects
    * @throws {TypeError} if the didDocument is not provided
@@ -183,37 +194,39 @@ export class DidBtc1Utils {
     if (!didDocument) throw new TypeError(`Required parameter missing: 'didDocument'`);
     const verificationMethods: DidVerificationMethod[] = [];
     // Check the 'verificationMethod' array.
-    verificationMethods.push(...didDocument.verificationMethod?.filter(DidBtc1Utils.isDidVerificationMethod) ?? []);
+    verificationMethods.push(...didDocument.verificationMethod?.filter(Btc1Utils.isDidVerificationMethod) ?? []);
     // Check verification relationship properties for embedded verification methods.
     Object.keys(DidVerificationRelationship).forEach((relationship) => {
       verificationMethods.push(
         ...(didDocument[relationship as keyof DidDocument] as (DidVerificationMethod)[])
-          ?.filter(DidBtc1Utils.isDidVerificationMethod) ?? []
+          ?.filter(Btc1Utils.isDidVerificationMethod) ?? []
       );
     });
     return verificationMethods;
   }
 
   /**
-   * @static @method
+   * Extracts the services from a given DID Document
+   * @static
    * @name getDidServices
-   * @description Extracts the services from a given DID Document
    * @param {DidDocument} didDocument The DID Document to extract the services from
    * @returns {DidService[]} An array of DidService objects
    * @throws {TypeError} if the didDocument is not provided
    */
-  static getDidServices({ didDocument }: { didDocument: DidDocument }): DidService[] {
+  static getDidBeaconServices({ didDocument }: { didDocument: DidDocument }): DidService[] {
     // Validate that the didDocument is provided.
     if (!didDocument) throw new TypeError(`Required parameter missing: 'didDocument'`);
-    // Initialize an array to store the services.
-    const services: DidService[] = didDocument.service?.filter(DidBtc1Utils.isDidService) ?? [];
-    return services;
+    // Filter out any invalid did service objects.
+    const didServices: DidService[] = didDocument.service?.filter(Btc1Utils.isDidService) ?? [];
+    // Filter for valid beacon service objects.
+    const beaconServices: DidService[] = didServices.filter(Btc1Utils.isBeaconService) ?? [];
+    return beaconServices;
   }
 
   /**
-   * @static @method
+   * Generate a set of Beacon Services for a given public key
+   * @static
    * @name generateBitcoinAddrs
-   * @description Generate a set of Beacon Services for a given public key
    * @param {BeaconServicesParams} params Required parameters for generating Beacon Services
    * @param {Uint8Array} params.pubkey Public key bytes used to generate the beacon object serviceEndpoint
    * @param {Network} params.network Bitcoin network interface from bitcoinlib-js
@@ -240,9 +253,9 @@ export class DidBtc1Utils {
   }
 
   /**
-   * @static @method
+   * Generate beacon services
+   * @static
    * @name generateBeaconServices
-   * @description Generate beacon services
    * @param {BeaconServicesParams} params Required parameters for generating Beacon Services
    * @param {Network} params.network The Bitcoin network to use (mainnet or testnet)
    * @param {Uint8Array} params.publicKey Byte array representation of a public key used to generate a new btc1 key-id-type
@@ -262,9 +275,9 @@ export class DidBtc1Utils {
   }
 
   /**
-   * @static @method
+   * Generate a beacon service
+   * @static
    * @name generateBeaconService
-   * @description Generate a beacon service
    * @param {BeaconServicesParams} params Required parameters for generating a single Beacon Service
    * @param {string} params.serviceId The type of service being created (#initialP2PKH, #initialP2WPKH, #initialP2TR)
    * @param {string} params.beaconType The tyoe of beacon service being created (SingletonBeacon, SMTAggregatorBeacon)

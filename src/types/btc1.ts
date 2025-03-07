@@ -8,7 +8,7 @@ import {
 } from '@web5/dids';
 import { networks } from 'bitcoinjs-lib';
 import { ClientConfig } from './bitcoind.js';
-import { Jwk } from '@web5/crypto';
+import BitcoinClient from '../bitcoin/client.js';
 
 /** Classes */
 export class BtcNetworks {
@@ -171,12 +171,12 @@ export interface UpdatePayload {
 }
 export interface TraverseBlockchainParams {
   contemporaryDidDocument: Btc1DidDocument;
-  targetVersionId: string;
-  targetBlockheight: number;
-  sidecarData: { initialDocument: Btc1DidDocument };
+  contemporaryBlockheight: number | 1;
   currentVersionId: number | 1;
+  targetVersionId?: number;
+  targetBlockheight: number;
   updateHashHistory: string[];
-  contemporaryBlockheight: number | 0;
+  sidecarData: SidecarData;
 }
 export interface ProofOptions {
   type: string;
@@ -228,10 +228,17 @@ export type KeyPairType = {
   privateKey: PrivateKey;
   publicKey: PublicKey
 };
+export type SidecarData = { initialDocument: Btc1DidDocument };
+export type ResolutionOptions = {
+  versionId?: number;
+  versionTime?: UnixTimestamp;
+  bitcoinClient?: BitcoinClient;
+  sidecarData: SidecarData;
+}
 export type UnixTimestamp = number;
 export type TargetDocumentParams = {
   initialDocument: Btc1DidDocument;
-  options: DidResolutionOptions
+  options: ResolutionOptions;
 };
 export type BroadcastPayloadParams = {
   beaconService: DidService;

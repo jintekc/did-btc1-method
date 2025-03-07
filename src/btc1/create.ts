@@ -1,11 +1,11 @@
 import { sha256 } from '@noble/hashes/sha256';
 import { bech32 } from '@scure/base';
-import { canonicalize } from '@web5/crypto';
+import { Canonicalize, PublicKeyUtils } from '@did-btc1/bip340-cryptosuite';
 import type { DidService, DidVerificationMethod } from '@web5/dids';
 import { DidError, DidErrorCode } from '@web5/dids';
 import { networks } from 'bitcoinjs-lib';
 import { ID_PLACEHOLDER_VALUE } from '../constants/btc1.js';
-import { DidBtc1Utils } from './utils.js';
+import { Btc1Utils } from './utils.js';
 import { DidBtc1 } from '../did-btc1.js';
 import {
   Btc1DidDocument,
@@ -16,7 +16,6 @@ import {
   CreateResponse,
   IntermediateVerificationMethod
 } from '../types/btc1.js';
-import { GeneralUtils } from '../utils/general.js';
 
 /**
  * Implements section {@link https://dcdpr.github.io/did-btc1/#create | 4.1 Create} of the
@@ -36,16 +35,14 @@ export class Btc1Create {
      * @returns {CreateResponse} object containing the created did and initial document
      */
   static deterministic({ version, network, publicKey }: CreateDeterministic): CreateResponse {
-    // Set idType to key
-    const idType = 'key';
-    // Set genesisBytes to publicKey
-    const genesisBytes = publicKey;
     // Create key-type identifier from genesisBytes
-    const did = this.identifier({ idType, network, version, genesisBytes });
+    const did = this.identifier({ idType: 'key', network, version, genesisBytes: publicKey });
     // Set the BTC network based on network name passed or default mainnet bitcoin
     const btcnetwork = BtcNetworks.get(network) ?? networks.bitcoin;
     // Get xOnlyPublicKey from publicKey
-    const xOnlyPublicKey = publicKey.slice(1, 33);
+    const publicKeyMultibase = PublicKeyUtils.encode(publicKey.slice(1, 33));
+    // Generate the beacon services from the network and public key
+    const service = Btc1Utils.generateBeaconServices({ network: btcnetwork, publicKey });
     // Return did & initialDocument
     return {
       did,
@@ -64,9 +61,9 @@ export class Btc1Create {
           id                 : '#initialKey',
           type               : 'Multikey',
           controller         : did,
-          publicKeyMultibase : GeneralUtils.encode(xOnlyPublicKey)
+          publicKeyMultibase,
         }],
-        service : DidBtc1Utils.generateBeaconServices({ publicKey, network: btcnetwork })
+        service
       }
     };
   }
@@ -125,7 +122,7 @@ export class Btc1Create {
     );
 
     // Sha256 hash the canonicalized byte array of the intermediateDocument
-    const genesisBytes = sha256(Buffer.from(canonicalize(intermediateDocument)));
+    const genesisBytes = sha256(Buffer.from(Canonicalize.jcs(intermediateDocument)));
     // Set idType to external
     const idType = 'external';
     // Set did to result of createIdentifier

@@ -8,9 +8,9 @@ importers:
 
   .:
     dependencies:
-      '@did-btc1/bip340-2025-cryptosuite':
-        specifier: ^2.0.0
-        version: 2.0.0(web-streams-polyfill@3.3.3)
+      '@did-btc1/bip340-cryptosuite':
+        specifier: ^2.1.2
+        version: 2.1.2(web-streams-polyfill@3.3.3)
       '@helia/strings':
         specifier: ^4.0.2
         version: 4.0.2
@@ -819,8 +819,8 @@ packages:
   '@decentralized-identity/ion-sdk@1.0.4':
     resolution: {integrity: sha512-pOWrlTH5ChxUKRHOgfG2ZeTioWEFJXADyErCQOJ0BqYNDKfP+CM09Vss+9ei6PNOABQlcDn0mEDFZtpO+DXl8A==}
 
-  '@did-btc1/bip340-2025-cryptosuite@2.0.0':
-    resolution: {integrity: sha512-68pDs6hvIAKF84yDwbCAflqOejEBJdSH88FHgwHKLFVXlruV+8jUz72rm1ArCSNCFovxqKQN64Op8X4tsX74uA==}
+  '@did-btc1/bip340-cryptosuite@2.1.2':
+    resolution: {integrity: sha512-1BBhQ1j/6JEOnKBKWajQHAefjYFn4XvStRz4eUtVqfRm7ck2tIlsAhwqveBr21U/qc+32/Lj7Isubm+rn5L4FA==}
     engines: {node: '>=22.0.0'}
 
   '@digitalbazaar/http-client@3.4.1':
@@ -1451,7 +1451,6 @@ packages:
 
   '@sphereon/kmp-mdoc-core@0.2.0-SNAPSHOT.26':
     resolution: {integrity: sha512-QXJ6R8ENiZV2rPMbn06cw5JKwqUYN1kzVRbYfONqE1PEXx1noQ4md7uxr2zSczi0ubKkNcbyYDNtIMTZIhGzmQ==}
-    bundledDependencies: []
 
   '@sphereon/ssi-types@0.32.0':
     resolution: {integrity: sha512-v5yC/bj1nvHE30cYMMqmjz2KHPpXj3OL8ZwnZQTiAMISS4DOVTjpYt0qZgb4eA1Lsdw2smd1bNYyVsOEJ02PAw==}
@@ -5411,7 +5410,7 @@ snapshots:
       multiformats: 12.1.3
       uri-js: 4.4.1
 
-  '@did-btc1/bip340-2025-cryptosuite@2.0.0(web-streams-polyfill@3.3.3)':
+  '@did-btc1/bip340-cryptosuite@2.1.2(web-streams-polyfill@3.3.3)':
     dependencies:
       '@noble/curves': 1.8.1
       '@noble/hashes': 1.7.1

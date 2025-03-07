@@ -13,29 +13,30 @@ import {
   ProofOptions,
   UpdatePayload
 } from '../types/btc1.js';
-import { DidBtc1Error } from './utils/errors.js';
-import { GeneralUtils } from './utils/general.js';
-import JsonPatch from './utils/json-patch.js';
+import { DidBtc1Error } from '../utils/errors.js';
+import { GeneralUtils } from '../utils/general.js';
+import JsonPatch from '../utils/json-patch.js';
 
 /**
- * Implements the {@link https://dcdpr.github.io/did-btc1/#update | Update} section of the
- * {@link https://dcdpr.github.io/did-btc1/ | DID BTC1} spec for updating `did:btc1` dids and did documents.
+ * Implements did-btc1 spec section {@link https://dcdpr.github.io/did-btc1/#update | 4.3 Update} of the CRUD sections
+ * for updating `did:btc1` dids and did documents.
+ * @export
+ * @class Btc1Update
+ * @type {Btc1Update}
  */
 export class Btc1Update {
   /**
+   *
    * Constructs an UpdatePayload object from a given sourceDocument, sourceVersionId, and documentPatch.
+   * {@link https://dcdpr.github.io/did-btc1/#construct-did-update-payload | 4.3.1 Construct DID Update Payload}
    *
-   * @remarks
-   * Implements section
-   * {@link https://dcdpr.github.io/did-btc1/#construct-did-update-payload | 4.3.1 Construct DID Update Payload} of the
-   * {@link https://dcdpr.github.io/did-btc1/ | did:btc1 DID Method Specification}.
-   *
-   * @params See {@link ConstructPayloadParams}.
+   * @static
+   * @param {ConstructPayloadParams} params Required params for calling the constructPayload method
    * @param {string} params.identifier The did-btc1 identifier to derive the root capability from.
    * @param {Btc1DidDocument} params.sourceDocument The source document to be updated.
    * @param {string} params.sourceVersionId The versionId of the source document.
    * @param {Btc1DocumentPatch} params.documentPatch The JSON patch to be applied to the source document.
-   * @returns An object of type {@link UpdatePayload}.
+   * @returns {UpdatePayload} The constructed UpdatePayload object.
    * @throws {DidError} with {@link DidErrorCode.InvalidDid} if sourceDocument.id does not match identifier.
    */
   static constructPayload({
@@ -59,7 +60,7 @@ export class Btc1Update {
       patch           : documentPatch,
       targetHash      : '',
       targetVersionId : `${Number(sourceVersionId) + 1}`,
-      sourceHash      : base58btc.encode(GeneralUtils.hashedCanonical(sourceDocument))
+      sourceHash      : base58btc.encode(GeneralUtils.sha256Canonicalize(sourceDocument))
     };
     // Apply patch to source document
     const targetDocument = JsonPatch.apply(sourceDocument, documentPatch);
@@ -70,20 +71,17 @@ export class Btc1Update {
       throw new DidError(DidErrorCode.InvalidDidDocument, `Invalid target document: ${errors.join(', ')}')}`);
     }
     // Set the targetHash in the UpdatePayload
-    UpdatePayload.targetHash = base58btc.encode(GeneralUtils.hashedCanonical(targetDocument));
+    UpdatePayload.targetHash = base58btc.encode(GeneralUtils.sha256Canonicalize(targetDocument));
     return UpdatePayload;
   }
 
   /**
-   * TODO: Implement a Local Key Manager
-   * TODO: Implement https://dcdpr.github.io/data-integrity-schnorr-secp256k1/#schnorr-secp256k1-rdfc-2025
-   * @static @method
-   * @name invokePayload
-   * @see {@link https://dcdpr.github.io/did-btc1/#invoke-did-update-payload}
-   * @summary Function retrieves privateKeyBytes for verificationMethod and adds ca`pability invocation
-   * @description
+   *
    * Function retrieves privateKeyBytes for verificationMethod and adds capability invocation, Data Integrity proof
-   * following the Authorization Capabilities (ZCAP-LD) and VC Data Integrity specifications
+   * following the Authorization Capabilities (ZCAP-LD) and VC Data Integrity specifications.
+   * {@link https://dcdpr.github.io/did-btc1/#invoke-did-update-payload | 4.3.1 Construct DID Update Payload}
+   *
+   * @static
    * @param {InvokePayloadParams} params Required params for calling the invokePayload method
    * @param {string} params.identifier The did-btc1 identifier to derive the root capability from
    * @param {DidUpdatePayload} params.updatePayload The updatePayload object to be signed
@@ -128,7 +126,7 @@ export class Btc1Update {
   }
 
   /**
-   * @static @method
+   * @static
    * @name deriveRootCapability
    * @description Derive a root capability from a given did-btc1 identifier
    * @param {string} identifier The did-btc1 identifier to derive the root capability from
@@ -145,7 +143,7 @@ export class Btc1Update {
   }
 
   /**
-   * @static @method
+   * @static
    * @description Retrieves beaconServices from sourceDocument and Broadcasts DID Update Payload for each beacon
    * @param {AnnounceUpdatePayloadParams} params Required params for calling the announcePayload method
    * @param {} params.sourceDocument The did-btc1 did document to derive the root capability from

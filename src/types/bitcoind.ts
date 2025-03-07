@@ -941,6 +941,6 @@ export enum RawTransactionVerbosity {
 }
 export interface TargetBlockHeight {
     block: BitcoinBlock;
-    bitcoind: BitcoinClient;
+    bitcoinClient: BitcoinClient;
     targetTime?: UnixTimestamp;
 }

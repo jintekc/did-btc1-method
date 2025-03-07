@@ -60,7 +60,7 @@ console.log('genesisBytes', genesisBytes);
 const hexDigest = Buffer.from(genesisBytes).toString('hex');
 console.log('hexDigest', hexDigest);
 
-const identifierComponents = DidBtc1Utils.parse(did);
+const identifierComponents = Btc1Utils.parse(did);
 console.log('identifierComponents', identifierComponents);
 
 const hashBytes = identifierComponents.genesisBytes;

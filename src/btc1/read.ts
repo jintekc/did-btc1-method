@@ -1,3 +1,4 @@
+import { PublicKey } from '@did-btc1/bip340-cryptosuite';
 import { strings } from '@helia/strings';
 import { sha256 } from '@noble/hashes/sha256';
 import { canonicalize } from '@web5/crypto';
@@ -6,36 +7,36 @@ import { DidError, DidErrorCode } from '@web5/dids';
 import { createHelia } from 'helia';
 import { CID } from 'multiformats/cid';
 import * as Digest from 'multiformats/hashes/digest';
-import Bitcoind from '../bitcoin/client.js';
+import BitcoinClient from '../bitcoin/client.js';
 import { DEFAULT_BLOCK_CONFIRMATIONS } from '../constants/bitcoin.js';
 import { ID_PLACEHOLDER_VALUE } from '../constants/btc1.js';
-import DidBtc1Utils from './utils/btc1.js';
 import { TargetBlockHeight } from '../types/bitcoind.js';
 import {
   Btc1DidDocument,
+  BtcNetworks,
   ReadCas,
   ReadDeterministic,
   ReadExternal,
   ReadSidecar,
   TargetDocumentParams,
   TraverseBlockchainParams,
-  UnixTimestamp
+  UnixTimestamp,
 } from '../types/btc1.js';
-import { DidBtc1Error } from './utils/errors.js';
-import { GeneralUtils } from './utils/general.js';
-import { Btc1Create } from './create.js';
+import { DidBtc1Error } from '../utils/errors.js';
+import { GeneralUtils } from '../utils/general.js';
+import { Btc1Utils } from './utils.js';
 
 /**
- * @class
- * @name Btc1Read
- * @description Implements the Read section of the did-btc1 spec for resolving `did:btc1` identifiers and documents
- * {@link https://dcdpr.github.io/did-btc1/#read}
+ * Implements {@link https://dcdpr.github.io/did-btc1/#read} section of the did-btc1 spec for resolving `did:btc1` identifiers and documents
+ * @export
+ * @class Btc1Read
+ * @type {Btc1Read}
  */
 export class Btc1Read {
   /**
-   * @static @method
+   * Recreates the `did:btc1` Document deterministically using the params
+   * @static
    * @name deterministic
-   * @description Recreates the `did:btc1` Document deterministically using the params
    * @param {ReadDeterministic} params Required params for calling the deterministic method
    * @param {string} params.version The did-btc1 version
    * @param {string} params.network The name of the bitcoin network (mainnet, testnet, regtest)
@@ -43,7 +44,17 @@ export class Btc1Read {
    * @returns {Btc1DidDocument} The resolved DID Document object
    */
   static deterministic({ identifier, identifierComponents }: ReadDeterministic): Btc1DidDocument {
-    const { version, network, genesisBytes } = identifierComponents;
+    // Deconstruct the identifierComponents
+    const { network: networkName, genesisBytes } = identifierComponents;
+    // Construct a new PublicKey
+    const publicKey = new PublicKey(genesisBytes);
+    // Get the network object from the network name
+    const network = BtcNetworks.get(networkName);
+    // Encode the public key as a mult
+    const publicKeyMultibase = publicKey.encode();
+    // Generate the beacon services from the network and public key
+    const service = Btc1Utils.generateBeaconServices({ network, publicKey: publicKey.x });
+    // Return the resolved DID Document object
     return {
       '@context' : [
         'https://www.w3.org/ns/did/v1',
@@ -59,17 +70,17 @@ export class Btc1Read {
         id                 : '#initialKey',
         type               : 'Multikey',
         controller         : identifier,
-        publicKeyMultibase : MultikeyUtils.encode(xOnlyPublicKey)
+        publicKeyMultibase
       }],
-      service : DidBtc1Utils.generateBeaconServices({ publicKey, network: btcnetwork })
+      service
     };
   }
-  // version, network, publicKey: genesisBytes
 
   /**
-   * @static @async @method
+   * Resolves the `did:btc1` Document externally (sidecar or cas) using the params
+   * @static
+   * @async
    * @name external
-   * @description Resolves the `did:btc1` Document externally (sidecar or cas) using the params
    * @param {ReadExternal} params Required params for calling the external method
    * @param {string} params.identifier The DID to be resolved
    * @param {Btc1IdentifierComponents} params.identifierComponents The components of the identifier
@@ -85,9 +96,9 @@ export class Btc1Read {
   }
 
   /**
-   * @static @method
+   * Validates a `did:btc1` identifier using sidecar data
+   * @static
    * @name sidecar
-   * @description Validates a `did:btc1` identifier using sidecar data
    * @param {ReadSidecar} params Required params for calling the sidecar method
    * @param {string} params.identifier The DID to be resolved
    * @param {Btc1IdentifierComponents} params.identifierComponents The components of the DID identifier
@@ -104,7 +115,7 @@ export class Btc1Read {
 
     /** Set the document.verificationMethod[i].controller to {@link ID_PLACEHOLDER_VALUE} */
     intermediateDocument.verificationMethod =
-          DidBtc1Utils.getVerificationMethods({ didDocument: intermediateDocument })
+          Btc1Utils.getVerificationMethods({ didDocument: intermediateDocument })
             .map((vm: DidVerificationMethod) => ({ ...vm, controller: intermediateDocument.id }));
 
     // Sha256 hash the canonicalized byte array of the intermediateDocument
@@ -118,9 +129,10 @@ export class Btc1Read {
   }
 
   /**
-   * @static @async @method
+   * @static
+   *  Resolves DID Document in Content Addressable Storage (CAS) using `did:btc1` identifier and components
+   * @async
    * @name cas
-   * @description Resolves DID Document in Content Addressable Storage (CAS) using `did:btc1` identifier and components
    * @param {ReadCas} params Required params for calling the cas method
    * @param {string} params.identifier BTC1 DID used to resolve the DID Document
    * @param {Btc1IdentifierComponents} params.identifierComponents BTC1 DID components used to resolve the DID Document
@@ -146,110 +158,185 @@ export class Btc1Read {
     // Set the initialDocument id and verification method controller to the identifier
     initialDocument.id = identifier;
     initialDocument.verificationMethod =
-          DidBtc1Utils.getVerificationMethods({ didDocument: initialDocument })
+          Btc1Utils.getVerificationMethods({ didDocument: initialDocument })
             .map((vm: DidVerificationMethod) => ({ ...vm, controller: initialDocument.id }));
     // Return the resolved initialDocument
     return initialDocument;
   }
 
   /**
-   * @static @async @method
+   * @static
+   *  Resolves a DID Document at a specific versionId and blockheight
+   * @async
    * @name targetDoc
-   * @description Resolves a DID Document at a specific versionId and blockheight
    * @param {TargetDocumentParams} params Required parameters for resolving the target DID Document
    * @param {Btc1DidDocument} params.initialDocument The initial DID Document to resolve
-   * @param {DidResolutionOptions} params.options The options for resolving the DID Document
+   * @param {ResolutionOptions} params.options The options for resolving the DID Document
    * @returns {Btc1DidDocument} The resolved DID Document object with a validated single, canonical history
    */
   static async targetDocument({ initialDocument, options }: TargetDocumentParams): Promise<Btc1DidDocument> {
-    if (options.versionId && options.versionId === 1) {
+    // If options.versionId is not null, set targetVersionId to options.versionId
+    const targetVersionId = options.versionId;
+
+    // If options.versionTime is not null, set targetTime to options.versionTime
+    const targetTime = options.versionTime;
+
+    // Set the targetBlockheight to the result of passing targetTime to the algorithm Determine Target Blockheight
+    const targetBlockheight = await this.determineTargetBlockheight(targetTime, options.bitcoinClient);
+
+    // Set sidecarData to options.sidrcarData
+    const sidecarData = options.sidecarData;
+
+    // Set currentVersionId to 1
+    const currentVersionId = 1;
+
+    // If the targetVersionId equals currentVersionId, return initialDocument
+    if(targetVersionId === currentVersionId) {
       return initialDocument;
     }
-    return this.traverseBlochchainHistory({
-      contemporaryDidDocument : initialDocument,
-      targetVersionId         : options.versionId,
-      targetBlockheight       : await this.determineTargetBlockheight(options.targetTime, options.bitcoind),
-      sidecarData             : options.sidecarData,
-      currentVersionId        : options.versionId,
-      updateHashHistory       : [],
-      contemporaryBlockheight : 0
+
+    // Set updateHashHistory to an empty array
+    const updateHashHistory = new Array();
+
+    // Set contemporaryBlockheight to 1
+    const contemporaryBlockheight = 1;
+
+    // Set contemporaryDidDocument to initialDocument
+    const contemporaryDidDocument = initialDocument;
+
+    // Set targetDocument to the result of passing contemporaryDIDDocument, contemporaryBlockheight,
+    // currentVersionId, targetVersionId, targetBlockheight, updateHashHistory, and sidecarData
+    // to the Traverse Blockchain History algorithm.
+    const targetDocument = this.traverseBlochchainHistory({
+      targetBlockheight,
+      currentVersionId,
+      targetVersionId,
+      updateHashHistory,
+      contemporaryBlockheight,
+      sidecarData,
+      contemporaryDidDocument,
     });
+
+    // Return targetDocument
+    return targetDocument;
   }
 
   /**
-   * @static @async @method
+   * @static
+   *  Determines the target blockheight given an optional targetTime or default confirmations
+   * @async
    * @name determineTargetBlockheight
-   * @description Determines the target blockheight given an optional targetTime or default confirmations
    * @param {UnixTimestamp} targetTime Optional unix timestamp used to find highest blockheight < targetTime
    * If not provided, finds the highest bitcoin blockheight where confirmations > {@link DEFAULT_BLOCK_CONFIRMATIONS}
-   * @param {Bitcoind} bitcoind Optional bitcoind client instance used to connect to a bitcoin node
+   * @param {BitcoinClient} bitcoinClient Optional bitcoind client instance used to connect to a bitcoin node
    * If not provided, connects to the default bitcoind node
    * If IS_TEST is also true, connects to a Polar regtest node
    * @returns {number} The target blockheight (number)
    * @throws {DidBtc1Error} if there is a block height mismatch
    */
-  static async determineTargetBlockheight(targetTime?: UnixTimestamp, bitcoind?: Bitcoind): Promise<number> {
-    // If bitcoind is not defined, connect to default bitcoin node
-    bitcoind ??= Bitcoind.connect();
+  static async determineTargetBlockheight(targetTime?: UnixTimestamp, bitcoinClient?: BitcoinClient): Promise<number> {
+    // If bitcoinClient is not defined, connect to default bitcoin node
+    bitcoinClient ??= BitcoinClient.connect();
     // Get the current block height
-    const height = await bitcoind.getBlockCount();
+    const height = await bitcoinClient.getBlockCount();
     // Get the current blockchain info blocks count
-    const { blocks } = await bitcoind.getBlockchainInfo();
+    const { blocks } = await bitcoinClient.getBlockchainInfo();
     // Gut check: If height is not equal to blocks, throw an error
     if (height !== blocks) {
       throw new DidBtc1Error(`Block height mismatch! ${height} !== ${blocks}`);
     }
     // Get the block hash at the current height
-    const hash = await bitcoind.getBlockHash(height);
+    const hash = await bitcoinClient.getBlockHash(height);
     // Get the block at the current height
-    const block = await bitcoind.getBlock(hash);
+    const block = await bitcoinClient.getBlock(hash);
     // Return block height response from getTargetBlockHeight
-    return await this.getTargetBlockHeight({ block, bitcoind, targetTime });
+    return await this.getTargetBlockHeight({ block, bitcoinClient, targetTime });
   }
 
   /**
-   * @static @async @method
+   * @static
+   *  Determines the target blockheight given an optional targetTime or default confirmations
+   * @async
    * @name getTargetBlockHeight
-   * @description Determines the target blockheight given an optional targetTime or default confirmations
    * @param {TargetBlockHeight} params Required parameters for determining the target blockheight
    * @param {BitcoinBlock} params.block Starting bitcoin block
-   * @param {Bitcoind} params.bitcoind Optional client connection to a bitcoind node (required in production)
+   * @param {BitcoinClient} params.bitcoinClient Optional client connection to a bitcoind node (required in production)
    * @param {UnixTimestamp} params.targetTime to find the largest block with timestamp < targetTime
    * @returns {number} Promise resolving to the target blockheight
    */
-  static async getTargetBlockHeight({block, bitcoind, targetTime}: TargetBlockHeight): Promise<number> {
+  static async getTargetBlockHeight({block, bitcoinClient, targetTime}: TargetBlockHeight): Promise<number> {
     if(!targetTime) {
       // Traverse Bitcoin blocks to find the largest block with confirmations >= DEFAULT_BLOCK_CONFIRMATIONS
       while (block.confirmations <= DEFAULT_BLOCK_CONFIRMATIONS) {
-        block.hash = await bitcoind.getBlockHash(--block.height);
-        block = await bitcoind.getBlock(block.hash);
+        block.hash = await bitcoinClient.getBlockHash(--block.height);
+        block = await bitcoinClient.getBlock(block.hash);
       }
       // Return the block height
       return block.height;
     }
     // Traverse Bitcoin blocks to find the largest block with timestamp < targetTime
     while (block.time > targetTime) {
-      block.hash = await bitcoind.getBlockHash(--block.height);
-      block = await bitcoind.getBlock(block.hash);
+      block.hash = await bitcoinClient.getBlockHash(--block.height);
+      block = await bitcoinClient.getBlock(block.hash);
     }
     // Return the block height
     return block.height;
   }
 
+
   /**
    *
-   * TODO: finish function once spec completed
+   * Takes as inputs a Bitcoin blockheight specified by contemporaryBlockheight and an array of beacons and returns a
+   * nextSignals object, containing a blockheight the signals were found in and an array of signals. Each signal is an
+   * object containing beaconId, beaconType, and tx properties.
+   * {@link https://dcdpr.github.io/did-btc1/#find-next-signals | 4.2.3.3 Find Next Signals}
    *
-   * This algorithm traverse Bitcoin blocks, starting from the block with the
-   * contemporaryBlockheight, to find beaconSignals emitted by Beacons within
-   * the contemporaryDIDDocument. Each beaconSignal is processed to retrieve a
-   * didUpdatePayload to the DID document. Each update is applied to the document and
-   * duplicates are ignored. If the algorithm reaches the block with the blockheight
-   * specified by a targetBlockheight, the contemporaryDIDDocument at that blockheight
-   * is returned assuming a single canonical history of the DID document has been
-   * constructed up to that point.
+   * @static
+   * @async
+   * @param {{ blockheight: number, beacons: any[] }} param0
+   * @param {number} param0.blockheight
+   * @param {{}} param0.beacons
+   */
+  static async findNextSignals({ blockheight, beacons }: { blockheight: number, beacons: any[] }){
+
+    const bitcoin = BitcoinClient.connect();
+    const block = await bitcoin.getBlock(`${blockheight}`);
+    const beaconSignals = [];
+    for (const tx of block.tx){
+      const raw = await bitcoin.getRawTransaction(tx, 1);
+      for (const vout of raw.vout){
+        for (const beacon of beacons){
+          if (vout.scriptPubKey.address === beacon.address){
+            beaconSignals.push({ beaconId: beacon.id, beaconType: beacon.type, tx });
+          }
+        }
+      }
+    }
+    return beaconSignals;
+  }
+
+  /**
    *
-   * @param params: The parameters for the traverseBlockchainHistory operation
+   * {@link 4.2.3.2 Traverse Blockchain History | https://dcdpr.github.io/did-btc1/#traverse-blockchain-history}
+   *
+   * The Traverse Blockchain History algorithm iterates over Bitcoin blocks, starting from the block with the,
+   * contemporaryBlockheight to find beaconSignals emitted by Beacons within the contemporaryDIDDocument. Each
+   * beaconSignal is processed to retrieve a didUpdatePayload to the DID document.
+   *
+   * Each update is applied to the document and duplicates are ignored. If the algorithm reaches the block with the
+   * blockheight specified by a targetBlockheight, the contemporaryDIDDocument at that blockheight is returned assuming
+   * a single canonical history of the DID document has been constructed up to that point.
+   *
+   * @static
+   * @param {TraverseBlockchainParams} params The parameters for the traverseBlockchainHistory operation
+   * @param {Btc1DidDocument} params.contemporaryDidDocument The DID Document at the contemporaryBlockheight
+   * @param {number} params.contemporaryBlockheight The blockheight of the contemporaryDIDDocument
+   * @param {number} params.currentVersionId The current versionId of the DID Document
+   * @param {number} params.targetVersionId The target versionId of the DID Document
+   * @param {number} params.targetBlockheight The target blockheight to resolve the DID Document
+   * @param {boolean} params.updateHashHistory The hash history of the DID Document updates
+   * @param {ResolutionOptions} params.sidecarData The sidecar data for the DID Document
+   * @returns {Btc1DidDocument} The resolved DID Document object with a validated single, canonical history
    */
   static traverseBlochchainHistory({
     contemporaryDidDocument,
@@ -260,11 +347,18 @@ export class Btc1Read {
     updateHashHistory,
     sidecarData,
   }: TraverseBlockchainParams): Btc1DidDocument {
-    const contemporaryHash = GeneralUtils.hashedCanonical(contemporaryDidDocument);
-    const beacons = DidBtc1Utils.getDidServices({ didDocument: contemporaryDidDocument });
-    for (const beacon of beacons) {
-      console.log('Beacon: ', beacon);
-    }
+    // Set contemporaryHash to the SHA256 hash of the contemporaryDIDDocument
+    // TODO: NEED TO DEAL WITH CANONICALIZATION
+    const contemporaryHash = GeneralUtils.sha256Canonicalize(contemporaryDidDocument);
+    // Find all beacons in contemporaryDIDDocument.services
+    // where service.type equals one of: "SingletonBeacon", "CIDAggregateBeacon" or "SMTAggregateBeacon".
+    const beacons = Btc1Utils.getDidBeaconServices({ didDocument: contemporaryDidDocument });
+    // For each beacon in beacons convert the beacon.serviceEndpoint to a Bitcoin address following BIP21. Set beacon.address to the Bitcoin address.
+    // TODO: Do we need to do this step? My understanding was that the serviceEndpoint was already a BIP21 Bitcoin address
+    // for (const beacon of beacons) { console.log('Beacon: ', beacon); }
+    // Set nextSignals to the result of calling algorithm Find Next Signals passing in contemporaryBlockheight and beacons.
+    const nextSignals = this.findNextSignals({ blockheight: contemporaryBlockheight, beacons });
+
     console.log(
       contemporaryHash,
       contemporaryDidDocument,

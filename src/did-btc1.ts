@@ -11,7 +11,7 @@ import * as tinysecp from 'tiny-secp256k1';
 import { Btc1Create } from './btc1/create.js';
 import { Btc1Read } from './btc1/read.js';
 import { Btc1Update } from './btc1/update.js';
-import DidBtc1Utils from './btc1/utils/btc1.js';
+import { Btc1Utils } from './btc1/utils.js';
 import {
   Btc1DidDocument,
   Btc1Networks,
@@ -22,7 +22,7 @@ import {
   GetSigningMethod,
   UpdateParams
 } from './types/btc1.js';
-import { DidBtc1Error } from './btc1/utils/errors.js';
+import { DidBtc1Error } from './utils/errors.js';
 
 /** initEccLib */
 initEccLib(tinysecp);
@@ -129,16 +129,12 @@ export class DidBtc1 implements DidMethod {
   static async resolve(identifier: string, options: DidBtc1ResolutionOptions = {}): Promise<DidResolutionResult> {
     try {
       // Parse the identifier into its components
-      const identifierComponents = DidBtc1Utils.parse(identifier);
-      const { hrp, genesisBytes, version, network, } = identifierComponents;
+      const components = Btc1Utils.parse(identifier);
+      const { hrp } = components;
 
-      // Set the default resolution result
-      const didResolutionResult: DidResolutionResult = {
-        '@context'            : 'https://w3id.org/did-resolution/v1',
-        didResolutionMetadata : {},
-        didDocumentMetadata   : {},
-        didDocument           : {} as Btc1DidDocument
-      };
+      if(!['k', 'x'].includes(hrp)) {
+        throw new DidError(DidErrorCode.InvalidDid, 'Invalid DID hrp');
+      }
 
       //  Make sure options.sidecarData is not null if hrp === x
       if (hrp === 'x' && !options.sidecarData) {
@@ -147,8 +143,16 @@ export class DidBtc1 implements DidMethod {
 
       // Resolve the DID Document based on the hrp
       const initialDocument = hrp === 'k'
-        ? Btc1Read.deterministic({ identifier, identifierComponents })
-        : await Btc1Read.external({ identifier, identifierComponents, options });
+        ? Btc1Read.deterministic({ identifier, identifierComponents: components })
+        : await Btc1Read.external({ identifier, identifierComponents: components, options });
+
+      // Set the default resolution result
+      const didResolutionResult: DidResolutionResult = {
+        '@context'            : 'https://w3id.org/did-resolution/v1',
+        didResolutionMetadata : {},
+        didDocumentMetadata   : {},
+        didDocument           : {} as Btc1DidDocument
+      };
 
       didResolutionResult.didDocument = await Btc1Read.targetDocument({ initialDocument, options });
       // Return the resolved DID Document
@@ -204,7 +208,7 @@ export class DidBtc1 implements DidMethod {
     });
     const didDocument = sourceDocument;
     // Get the sourceDocument verificationMethods and filter for the verificationMethodId passed
-    const verificationMethod = DidBtc1Utils.getVerificationMethods({ didDocument }).filter(
+    const verificationMethod = Btc1Utils.getVerificationMethods({ didDocument }).filter(
       vm => vm.id === verificationMethodId
     )?.[0];
     // Validate the verificationMethod type is Multikey
@@ -245,8 +249,8 @@ export class DidBtc1 implements DidMethod {
     // Attempt to find a verification method that matches the given method ID, or if not given,
     // find the first verification method intended for signing claims.
     const verificationMethod = didDocument.verificationMethod?.find(
-      vm => DidBtc1Utils.extractDidFragment(vm.id) === (DidBtc1Utils.extractDidFragment(methodId)
-        ?? DidBtc1Utils.extractDidFragment(didDocument.assertionMethod?.[0]))
+      vm => Btc1Utils.extractDidFragment(vm.id) === (Btc1Utils.extractDidFragment(methodId)
+        ?? Btc1Utils.extractDidFragment(didDocument.assertionMethod?.[0]))
     );
     if (!(verificationMethod && verificationMethod.publicKeyMultibase)) {
       throw new DidError(

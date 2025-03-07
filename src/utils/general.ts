@@ -1,16 +1,14 @@
-import { schnorr } from '@noble/curves/secp256k1';
+import { Canonicalize, SECP256K1_XONLY_PREFIX } from '@did-btc1/bip340-cryptosuite';
 import { sha256 } from '@noble/hashes/sha256';
-import { utils, CURVE, getPublicKey } from '@noble/secp256k1';
+import { CURVE, getPublicKey, utils } from '@noble/secp256k1';
 import { HDKey } from '@scure/bip32';
 import { generateMnemonic, mnemonicToSeed } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import { canonicalize } from '@web5/crypto';
-import { JSONObject } from '../../exts.js';
-import { KeyPair, PublicKeyBytes } from '../../types/btc1.js';
-import { HdWallet } from '../../types/crypto.js';
 import { base58btc } from 'multiformats/bases/base58';
-
-export const SECP256K1_XONLY_PREFIX: Uint8Array = new Uint8Array([0xe1, 0x4a]);
+import { JSONObject } from '../exts.js';
+import { PublicKeyBytes } from '../types/btc1.js';
+import { HdWallet } from '../types/crypto.js';
 
 /**
  * Static class of general utility functions for the did-btc1 spec implementation
@@ -42,26 +40,6 @@ export class GeneralUtils {
   static bigintToBuffer(value: bigint): Buffer {
     const hex = value.toString(16).padStart(64, '0');
     return Buffer.from(hex, 'hex');
-  }
-
-
-  /**
-   * Generate a new Schnorr key pair
-   * @static
-   * @returns {KeyPair}
-   * @throws {Error} if the private key is invalid
-   */
-  static generateSchnorrKeyPair(): KeyPair {
-    // Generate a random private key
-    const privateKey = schnorr.utils.randomPrivateKey();
-    // Ensure the private key is valid, throw an error if not valid
-    if (!utils.isValidPrivateKey(privateKey)) {
-      throw new Error('Invalid private key');
-    }
-    // Generate public key from private key
-    const publicKey = schnorr.getPublicKey(privateKey);
-    // Return the keypair
-    return { privateKey, publicKey };
   }
 
   /**
@@ -240,7 +218,7 @@ export class GeneralUtils {
    * @param {JSONObject} data The data to hash
    * @returns {Uint8Array} The sha256 hash bytes of a canonicalized JSON object
    */
-  static hashedCanonical(data: JSONObject): Uint8Array {
-    return sha256(Buffer.from(canonicalize(data)));
+  static sha256Canonicalize(data: JSONObject): Uint8Array {
+    return sha256(Buffer.from(Canonicalize.jcs(data)));
   }
 }
