@@ -12,11 +12,6 @@
             "types": "./dist/types/index.d.ts",
             "import": "./dist/esm/index.js",
             "require": "./dist/cjs/index.js"
-        },
-        "./browser": {
-            "types": "./dist/types/index.d.ts",
-            "import": "./dist/browser/browser.mjs",
-            "require": "./dist/browser/browser.js"
         }
     },
     "scripts": {
@@ -25,13 +20,10 @@
         "build": "pnpm clean && pnpm build:esm && pnpm build:cjs",
         "build:esm": "rimraf dist/esm dist/types && pnpm tsc -p tsconfig.json",
         "build:cjs": "rimraf dist/cjs && tsc -p tsconfig.cjs.json && echo '{\"type\": \"commonjs\"}' > ./dist/cjs/package.json",
-        "build:browser": "rimraf dist/browser && node build/bundles.js",
         "build:tests:node": "rimraf tests/compiled && pnpm tsc -p tests/tsconfig.json",
-        "build:tests:browser": "rimraf tests/compiled && node build/esbuild-tests.cjs",
         "lint": "eslint . --max-warnings 0",
         "lint:fix": "eslint . --fix",
         "test:node": "pnpm build:tests:node && pnpm c8 mocha",
-        "test:browser": "pnpm build:tests:browser && web-test-runner",
         "build:test": "pnpm build && pnpm build:tests:node && pnpm test:node",
         "build:lint:test": "pnpm build && pnpm build:tests:node && pnpm lint:fix",
         "prepublish": "pnpm build",
@@ -39,13 +31,13 @@
         "version:no-git": "pnpm version --no-commit-hooks --no-git-tag-version",
         "version:new": "git checkout -b $NEW_VERSION && git tag $NEW_VERSION && pnpm version:no-git $NEW_VERSION"
     },
-    "homepage": "https://github.com/jintekc/did-btc1-js",
+    "homepage": "https://github.com/jintekc/did-btc1-method",
     "bugs": {
-        "url": "https://github.com/jintekc/did-btc1-js/issues"
+        "url": "https://github.com/jintekc/did-btc1-method/issues"
     },
     "repository": {
         "type": "git",
-        "url": "git+ssh://git@github.com/jintekc/did-btc1-js.git"
+        "url": "git+ssh://git@github.com/jintekc/did-btc1-method.git"
     },
     "license": "MPL-2.0",
     "contributors": [
@@ -113,7 +105,6 @@
         "globals": "^15.11.0",
         "mocha": "^10.8.2",
         "mocha-junit-reporter": "^2.2.1",
-        "node-stdlib-browser": "^1.2.1",
         "rimraf": "^6.0.1",
         "typescript": "^5.6.2",
         "typescript-eslint": "^8.19.1"
