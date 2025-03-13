@@ -10,7 +10,7 @@ import {
   DidResolutionOptions,
   UpdatePayload
 } from '../btc1/interface.js';
-import { BeaconService } from '../../beacons/interface.js';
+import { BeaconService } from './beacons/interface.js';
 
 export type DidPlaceholder = 'did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 

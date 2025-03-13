@@ -15,8 +15,8 @@ import { GeneralUtils } from '../../utils/general.js';
 import { Btc1DidDocument } from '../did-document.js';
 import { ReadBlockchainParams } from '../interface.js';
 import { DidReadCas, DidReadDeterministic, DidReadExternal, DidReadSidecar, FindNextSignals, SidecarData, TargetDocumentParams, UnixTimestamp } from '../types.js';
-import { BeaconSignal } from '../../../beacons/interface.js';
-import { SingletonBeacon } from '../../../beacons/singleton/index.js';
+import { BeaconSignal } from '../beacons/interface.js';
+import { SingletonBeacon } from '../beacons/singleton/index.js';
 
 /**
  * Implements {@link https://dcdpr.github.io/did-btc1/#read | 4.2 Read}
