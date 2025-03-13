@@ -13,7 +13,7 @@ import { DidBtc1 } from '../did-btc1.js';
 import { Maybe } from '../exts.js';
 import { DidBtc1Error } from '../utils/error.js';
 import { Btc1Networks } from './types.js';
-import { BeaconService, BeaconServicesParams, BeaconServiceAddress } from '../../beacons/interface.js';
+import { BeaconService, BeaconServicesParams, BeaconServiceAddress } from './beacons/interface.js';
 
 /**
  * Utility functions for the DID BTC1 method

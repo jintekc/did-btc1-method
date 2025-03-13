@@ -1,5 +1,5 @@
 import { DidVerificationMethod as IDidVerificationMethod, DidDocument as IDidDocument } from '@web5/dids';
-import { BeaconService } from '../../beacons/interface.js';
+import { BeaconService } from './beacons/interface.js';
 
 /**
  * DID BTC1 DID Document

@@ -11,7 +11,8 @@ import BitcoinRpc from '../bitcoin/rpc-client.js';
 import { Btc1DidDocument, DidDocument } from './did-document.js';
 import { Btc1KeyManager } from './key-manager/index.js';
 import { DidPlaceholder, RecoveryOptions, SidecarDataCID, SidecarDataSMT, UnixTimestamp } from './types.js';
-import { BeaconServicesParams } from '../../beacons/interface.js';
+import { DidDocumentPatch } from '../utils/json-patch.js';
+import { BeaconServicesParams } from './beacons/interface.js';
 
 
 export interface DidServiceSingletonBeacon extends DidService {
