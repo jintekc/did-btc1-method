@@ -1,14 +1,14 @@
-import { DidVerificationMethod as IDidVerificationMethod, DidDocument as IDidDocument } from '@web5/dids';
+import { DidVerificationMethod, DidDocument } from '@web5/dids';
 import { BeaconService } from './beacons/interface.js';
 
 /**
- * DID BTC1 DID Document
+ * DID BTC1 Verification Method extends the DidVerificationMethod class adding helper methods and properties
  * @export
  * @class Btc1VerificationMethod
  * @type {Btc1VerificationMethod}
  * @implements {DidVerificationMethod}
  */
-export class DidVerificationMethod implements IDidVerificationMethod {
+export class Btc1VerificationMethod implements DidVerificationMethod {
   id: string;
   type: string;
   controller: string;
@@ -19,29 +19,8 @@ export class DidVerificationMethod implements IDidVerificationMethod {
     this.controller = controller;
     this.publicKeyMultibase = publicKeyMultibase;
   }
-}
 
-/**
- * DID Document implements the DidDocument interface for extension by the Btc1DidDocument class
- * @export
- * @class DidDocument
- * @type {DidDocument}
- * @implements {IDidDocument}
- */
-export class DidDocument implements IDidDocument {
-  id: string;
-  '@context'?: string | (string | Record<string, any>)[] | undefined;
-  alsoKnownAs?: string[] | undefined;
-  controller?: string | string[] | undefined;
-  verificationMethod?: DidVerificationMethod[] | undefined;
-  assertionMethod?: (string | DidVerificationMethod)[] | undefined;
-  authentication?: (string | DidVerificationMethod)[] | undefined;
-  keyAgreement?: (string | DidVerificationMethod)[] | undefined;
-  capabilityDelegation?: (string | DidVerificationMethod)[] | undefined;
-  capabilityInvocation?: (string | DidVerificationMethod)[] | undefined;
-  service?: BeaconService[] | undefined;
-
-  constructor(id: string) { this.id = id; }
+  // TODO: Add helper methods and properties
 }
 
 /**
@@ -49,13 +28,23 @@ export class DidDocument implements IDidDocument {
  * @export
  * @class Btc1DidDocument
  * @type {Btc1DidDocument}
- * @extends {DidDocument}
+ * @implements {DidDocument}
  */
-export class Btc1DidDocument extends DidDocument {
+export class Btc1DidDocument implements DidDocument {
+  id: string;
+  '@context'?: string | (string | Record<string, any>)[] | undefined;
+  alsoKnownAs?: string[] | undefined;
+  controller?: string | string[] | undefined;
   verificationMethod: DidVerificationMethod[];
+  assertionMethod?: (string | DidVerificationMethod)[] | undefined;
+  authentication?: (string | DidVerificationMethod)[] | undefined;
+  keyAgreement?: (string | DidVerificationMethod)[] | undefined;
+  capabilityDelegation?: (string | DidVerificationMethod)[] | undefined;
+  capabilityInvocation?: (string | DidVerificationMethod)[] | undefined;
   service: BeaconService[];
+
   constructor(id: string, verificationMethod: DidVerificationMethod[], service: BeaconService[]) {
-    super(id);
+    this.id = id;
     this.verificationMethod = verificationMethod;
     this.service = service;
   }

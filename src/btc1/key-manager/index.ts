@@ -1,10 +1,13 @@
-import { HashBytes, KeyPair, KeyPairUtils, Logger, MultibaseKeyPair } from '@did-btc1/bip340-cryptosuite';
+import { HashBytes, Logger } from '@did-btc1/bip340-cryptosuite';
+import { Hex, KeyPair, KeyPairUtils, PublicKey, SignatureBytes } from '@did-btc1/bip340-key-pair';
+import { schnorr } from '@noble/curves/secp256k1';
 import { sha256 } from '@noble/hashes/sha256';
 import { KeyValueStore, MemoryStore } from '@web5/common';
 import { KeyIdentifier } from '@web5/crypto';
+import { randomBytes } from 'crypto';
 import { Btc1KeyManagerOptions, KeyManagerParams, MULTIBASE_URI_PREFIX } from '../../index.js';
 import { Btc1KeyManagerError } from '../../utils/error.js';
-import { KeyManager } from './interface.js';
+import { KeyManager, MultikeyPair } from './interface.js';
 
 /**
  * A class for managing cryptographic keys for the Btc1 DID method.
@@ -24,33 +27,80 @@ export class Btc1KeyManager implements KeyManager {
    * persistent storage, providing flexibility in key management according to the application's
    * requirements.
    */
-  private _keyStore: KeyValueStore<KeyIdentifier, MultibaseKeyPair>;
+  private _keyStore: KeyValueStore<KeyIdentifier, KeyPair>;
 
   /**
    * Creates an instance of Btc1KeyManager.
    * @constructor
    * @param {?KeyManagerParams} params The parameters to initialize the key manager.
-   * @param {KeyValueStore<KeyIdentifier, MultibaseKeyPair>} params.keyStore An optional property
+   * @param {KeyValueStore<KeyIdentifier, MultikeyPair>} params.keyStore An optional property
    * to specify a custom `KeyValueStore` instance for key management. If not provided,
    * {@link Btc1KeyManager | `Btc1KeyManager`} uses a default `MemoryStore` instance. This store is
    * responsible for managing cryptographic keys, allowing them to be retrieved, stored, and managed
    * during cryptographic operations.
    */
   constructor(params?: KeyManagerParams) {
-    this._keyStore = params?.keyStore ?? new MemoryStore<KeyIdentifier, MultibaseKeyPair>();
+    this._keyStore = params?.keyStore ?? new MemoryStore<KeyIdentifier, MultikeyPair>();
     this.activeKeyUri = params?.keyUri ?? '';
   }
 
-
   /**
-   * TODO: Complete method.
-   * Gets the active key URI.
-   *
+   * Gets the key pair from the key store and returns a PublicKey.
    * @public
    * @async
-   * @param {KeyIdentifier} keyUri The URI of the key to get the public key for.
-   * @returns {Promise<object>}
-  public async getPublicKey(keyUri?: KeyIdentifier): Promise<object> {
+   * @param {?KeyIdentifier} keyUri The URI of the key to get the public key for.
+   * @returns {Promise<PublicKey>} The public key associated with the key URI.
+   */
+  public async getPublicKey(keyUri?: KeyIdentifier): Promise<PublicKey> {
+    // Get the key pair from the key store and return it
+    const { publicKey } = await this.getKey(keyUri);
+
+    return publicKey;
+  }
+
+  /**
+   * Signs the given data using the key associated with the key URI.
+   * @public
+   * @async
+   * @param {KeyIdentifier} keyUri The URI of the key to sign the data with.
+   * @param {Hex} data The data to sign.
+   * @returns {Promise<SignatureBytes>} A promise resolving to the signature of the data.
+   */
+  public async sign(keyUri: KeyIdentifier, data: Hex): Promise<SignatureBytes> {
+    // Get the multikey from the key store
+    const { privateKey } = await this.getKey(keyUri);
+
+    // Sign the data using the multikey
+    return schnorr.sign(data, privateKey.bytes, randomBytes(32));
+  }
+
+  /**
+   * Verifies the signature of the given data using the key associated with the key URI.
+   * @public
+   * @async
+   * @param {KeyIdentifier} keyUri The URI of the key to verify the signature with.
+   * @param {SignatureBytes} signature The signature to verify.
+   * @param {Hex} data The data to verify the signature with.
+   * @returns {Promise<boolean>} A promise resolving to a boolean indicating the verification result.
+   */
+  public async verify(keyUri: KeyIdentifier, signature: SignatureBytes, data: Hex): Promise<boolean> {
+    // Get the multikey from the key store
+    const { publicKey } = await this.getKey(keyUri);
+
+    // Verify the signature using the multikey
+    return schnorr.verify(signature, data, publicKey.x);
+  }
+
+  /**
+   * Gets the key pair from the key store.
+   * See {@link KeyManager.getKey | KeyManager} for more details.
+   * @public
+   * @async
+   * @param {KeyIdentifier} keyUri The URI of the key to get.
+   * @returns {Promise<KeyPair>} The key pair associated with the key URI.
+   * @throws {Btc1KeyManagerError} If the key is not found in the key store.
+   */
+  private async getKey(keyUri?: KeyIdentifier): Promise<KeyPair> {
     // Use the active key URI if not provided
     keyUri ??= this.activeKeyUri;
 
@@ -60,60 +110,34 @@ export class Btc1KeyManager implements KeyManager {
     }
 
     // Get the key pair from the key store
-    const keyPair = await this._keyStore.get(keyUri);
+    const key = await this._keyStore.get(keyUri);
 
     // Throw an error if the key is not found
-    if (!keyPair) {
-      throw new Btc1KeyManagerError(`Key not found for Multibase URI: ${keyUri}`, 'KEY_NOT_FOUND');
+    if (!key) {
+      throw new Btc1KeyManagerError(`Key not found for URI: ${keyUri}`, 'KEY_NOT_FOUND');
     }
 
-    // Return the public key
-    return keyPair.publicKey;
-  }*/
-
-
-  /**
-   * TODO: Complete methods
-   * Converts the KeyPair to a Multikey.
-   * @public
-   * @async
-   * @param {KeyIdentifier} keyUri
-   * @returns {Promise<MultibaseKeyPair>}
-  public async getMultikey(keyUri: KeyIdentifier): Promise<MultibaseKeyPair> {
-    const multikeyPair = await this.exportKey(keyUri) as KeyPair;
-    const keyPair = new KeyPair(multikeyPair) as KeyPair;
-    const multikey = new Multikey({ id, controller, keyPair });
+    return key;
   }
 
-  public sign(keyUri: KeyIdentifier, data: Hex): SignatureBytes {
-    throw new Error('Method not implemented.');
-  }
-
-  public verify(keyUri: KeyIdentifier, signature: SignatureBytes, data: Hex): Promise<boolean> {
-    throw new Error('Method not implemented.');
-  }*/
-
   /**
-   * Exports the full key pair from the key store.
+   * Exports the full multikeypair from the key store.
+   * See {@link KeyManager.exportKey | KeyManager} for more details.
    * @public
    * @async
    * @param {KeyIdentifier} keyUri The URI of the key to export.
-   * @returns {Promise<MultibaseKeyPair>} The key pair associated with the key URI.
+   * @returns {Promise<KeyPair>} The key pair associated with the key URI.
    * @throws {Btc1KeyManagerError} If the key is not found in the key store.
    */
-  public async exportKey(keyUri: KeyIdentifier): Promise<MultibaseKeyPair> {
-    const keyPair = await this._keyStore.get(keyUri);
-    if (!keyPair) {
-      throw new Btc1KeyManagerError(`Key not found for Multibase URI: ${keyUri}`, 'KEY_NOT_FOUND');
-    }
-
-    return keyPair;
+  public async exportKey(keyUri: KeyIdentifier): Promise<KeyPair> {
+    // Get the key from the key store and return it
+    return await this.getKey(keyUri);
   }
 
 
   /**
    * Imports a keypair into the key store.
-   * See {@link IBtc1KeyManager.importKey | IBtc1KeyManager} for more details.
+   * See {@link KeyManager.importKey | KeyManager} for more details.
    * @public
    * @async
    * @param {KeyPair} keyPair The keypair to import.
@@ -121,18 +145,15 @@ export class Btc1KeyManager implements KeyManager {
    * @param {boolean} options.active A flag to set the key as active (optional, default: false).
    * @returns {Promise<KeyIdentifier>} The URI of the imported keypair.
    */
-  public async importKey(keyPair: KeyPair, { active }: Btc1KeyManagerOptions = {}): Promise<KeyIdentifier> {
+  public async importKey(keyPair: KeyPair, options: Btc1KeyManagerOptions = {}): Promise<KeyIdentifier> {
     // Compute the key URI if not provided
     const keyUri = this.computeKeyUri(keyPair);
 
     // Store the keypair in the key store
-    const multibaseKey = keyPair.multibase();
-
-    // Store the keypair in the key store
-    await this._keyStore.set(keyUri, multibaseKey);
+    await this._keyStore.set(keyUri, keyPair);
 
     // Set the key as active if required
-    if(active) {
+    if (options.active) {
       this.activeKeyUri = keyUri;
     }
 
@@ -140,10 +161,9 @@ export class Btc1KeyManager implements KeyManager {
     return keyUri;
   }
 
-
   /**
    * Computes the hash of the given data.
-   * See {@link IBtc1KeyManager.digest | IBtc1KeyManager} for more details.
+   * See {@link KeyManager.digest | KeyManager} for more details.
    * @public
    * @param {Uint8Array} data The data to hash.
    * @returns {HashBytes} The hash of the data.
@@ -154,7 +174,7 @@ export class Btc1KeyManager implements KeyManager {
 
   /**
    * Computes the key URI of a given keypair.
-   * See {@link IBtc1KeyManager.computeKeyUri | IBtc1KeyManager} for more details.
+   * See {@link KeyManager.computeKeyUri | KeyManager} for more details.
    * @public
    * @param {KeyPair} keyPair The keypair to compute the URI for/
    * @returns {KeyIdentifier} The URI of the keypair/
@@ -164,31 +184,20 @@ export class Btc1KeyManager implements KeyManager {
     return `${MULTIBASE_URI_PREFIX}${keyPair.publicKey.multibase}`;
   }
 
-  /**
-   * Generates a new keypair and stores it in the key store.
-   * See {@link IBtc1KeyManager.generateKey | IBtc1KeyManager} for more details.
-   * @public
-   * @async
-   * @param {Btc1KeyManagerOptions} options The options to generate the keypair (optional, default: true).
-   * @param {boolean} options.importKey A flag to import the keypair into the key store (optional, default: false).
-   * @param {boolean} options.active A flag to set the key as active.
-   * @returns {KeyIdentifier} The URI of the generated keypair.
-   */
-  public async generateKey({ importKey, active }: Btc1KeyManagerOptions = {}): Promise<KeyIdentifier | KeyPair> {
+  public async generateKey(options: Btc1KeyManagerOptions): Promise<KeyPair | KeyIdentifier> {
     // Set default values for the options
-    importKey ??= true;
-    active ??= false;
+    options ??= { importKey: true, active: false };
 
     // Generate a new keypair
     const keyPair = KeyPairUtils.generate();
 
     // If "importKey" is true, import the key and return the key URI
-    if(importKey) {
-      return await this.importKey(keyPair, { active });
+    if(!options.importKey) {
+      return keyPair;
     }
 
     // Return the key URI
-    return keyPair;
+    return await this.importKey(keyPair, options);
   }
 
   /**
@@ -199,21 +208,27 @@ export class Btc1KeyManager implements KeyManager {
    * @param {KeyPair} keyPair The keypair used to initialize the key manager (optional).
    * @returns {Btc1KeyManager} A new Btc1KeyManager instance.
    */
-  public static async initialize(keyPair?: KeyPair): Promise<Btc1KeyManager> {
+  public static async initialize(id: string, controller: string, keyPair?: KeyPair): Promise<Btc1KeyManager> {
+    // Throw an error if ID or controller is not provided
+    if (!id || !controller) {
+      throw new Btc1KeyManagerError('ID and Controller are required to generate a key.', 'MISSING_PARAMS');
+    }
+
     // Check if the keypair is provided
     if(!keyPair) {
       // Log a warning message if not provided
-      Logger.warn('KeyPair not provided. Generating a new keypair ...');
+      console.warn('KeyPair not provided, generating ...');
     }
 
     // Generate a new keypair if not provided
     keyPair ??= KeyPairUtils.generate();
 
+
     // Initialize the key manager with the keypair
     const keyManager = new Btc1KeyManager();
 
     // Import the keypair into the key store
-    const keyUri = await keyManager.importKey(keyPair);
+    const keyUri = await keyManager.importKey(keyPair, { active: true });
 
     // Set the active key URI
     keyManager.activeKeyUri = keyUri;

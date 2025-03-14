@@ -9,8 +9,11 @@ importers:
   .:
     dependencies:
       '@did-btc1/bip340-cryptosuite':
-        specifier: ^2.2.2
-        version: 2.2.2(web-streams-polyfill@3.3.3)
+        specifier: ^2.4.1
+        version: 2.4.1(web-streams-polyfill@3.3.3)
+      '@did-btc1/bip340-key-pair':
+        specifier: ^0.4.0
+        version: 0.4.0
       '@eslint/js':
         specifier: ^9.22.0
         version: 9.22.0
@@ -822,8 +825,12 @@ packages:
   '@decentralized-identity/ion-sdk@1.0.4':
     resolution: {integrity: sha512-pOWrlTH5ChxUKRHOgfG2ZeTioWEFJXADyErCQOJ0BqYNDKfP+CM09Vss+9ei6PNOABQlcDn0mEDFZtpO+DXl8A==}
 
-  '@did-btc1/bip340-cryptosuite@2.2.2':
-    resolution: {integrity: sha512-rQtOIRBZUhSydmuC4g7/Ub4gF4SPdl1aRG/9YDle3bWByU8pMAkebF1QvNHLMKxmOQ3FtBYbpXEIy1ioouU+Tg==}
+  '@did-btc1/bip340-cryptosuite@2.4.1':
+    resolution: {integrity: sha512-d9QytkeL/37/jVTj7TG9NvT78fAssXlJOJV0zV83dG6nDGCQMe6maB5cUJT4VwxyJhVqvfFXbzevGq5VCbqLeQ==}
+    engines: {node: '>=22.0.0'}
+
+  '@did-btc1/bip340-key-pair@0.4.0':
+    resolution: {integrity: sha512-XXIddRjobSa8+II4RhK3Py/apP3mOkMjVHMW+vXNhDQx8zu5o5jHSc8A3eY8+1sVjFJgiscwXYn9sAgx/WM4JQ==}
     engines: {node: '>=22.0.0'}
 
   '@digitalbazaar/http-client@3.4.1':
@@ -1458,6 +1465,7 @@ packages:
 
   '@sphereon/kmp-mdoc-core@0.2.0-SNAPSHOT.26':
     resolution: {integrity: sha512-QXJ6R8ENiZV2rPMbn06cw5JKwqUYN1kzVRbYfONqE1PEXx1noQ4md7uxr2zSczi0ubKkNcbyYDNtIMTZIhGzmQ==}
+    bundledDependencies: []
 
   '@sphereon/ssi-types@0.32.0':
     resolution: {integrity: sha512-v5yC/bj1nvHE30cYMMqmjz2KHPpXj3OL8ZwnZQTiAMISS4DOVTjpYt0qZgb4eA1Lsdw2smd1bNYyVsOEJ02PAw==}
@@ -5417,8 +5425,9 @@ snapshots:
       multiformats: 12.1.3
       uri-js: 4.4.1
 
-  '@did-btc1/bip340-cryptosuite@2.2.2(web-streams-polyfill@3.3.3)':
+  '@did-btc1/bip340-cryptosuite@2.4.1(web-streams-polyfill@3.3.3)':
     dependencies:
+      '@did-btc1/bip340-key-pair': 0.4.0
       '@noble/curves': 1.8.1
       '@noble/hashes': 1.7.1
       '@sphereon/ssi-types': 0.32.0
@@ -5431,6 +5440,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
       - web-streams-polyfill
+
+  '@did-btc1/bip340-key-pair@0.4.0':
+    dependencies:
+      '@noble/hashes': 1.7.1
+      multiformats: 13.3.2
+      tiny-secp256k1: 2.2.3
 
   '@digitalbazaar/http-client@3.4.1(web-streams-polyfill@3.3.3)':
     dependencies:
