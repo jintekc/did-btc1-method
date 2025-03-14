@@ -1,15 +1,16 @@
-import { Canonicalize, PublicKey } from '@did-btc1/bip340-cryptosuite';
+import { Canonicalize } from '@did-btc1/bip340-cryptosuite';
+import { PublicKey } from '@did-btc1/bip340-key-pair';
 import { sha256 } from '@noble/hashes/sha256';
 import { bech32 } from '@scure/base';
 import type { DidService, DidVerificationMethod } from '@web5/dids';
 import { DidError, DidErrorCode } from '@web5/dids';
 import { getNetwork } from '../../bitcoin/network.js';
-import { ID_PLACEHOLDER_VALUE } from '../constants.js';
 import { DidBtc1 } from '../../did-btc1.js';
-import { Btc1Utils } from '../utils.js';
+import { ID_PLACEHOLDER_VALUE } from '../constants.js';
 import { Btc1DidDocument } from '../did-document.js';
 import { DidCreateResponse, IntermediateVerificationMethod } from '../interface.js';
-import { DidCreateDeterministic, DidCreateExternal, CreateIdentifierParams } from '../types.js';
+import { CreateIdentifierParams, DidCreateDeterministic, DidCreateExternal } from '../types.js';
+import { Btc1Utils } from '../utils.js';
 /**
  * Implements section {@link https://dcdpr.github.io/did-btc1/#create | 4.1 Create}
  *

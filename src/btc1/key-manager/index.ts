@@ -7,7 +7,7 @@ import { KeyIdentifier } from '@web5/crypto';
 import { randomBytes } from 'crypto';
 import { Btc1KeyManagerOptions, KeyManagerParams, MULTIBASE_URI_PREFIX } from '../../index.js';
 import { Btc1KeyManagerError } from '../../utils/error.js';
-import { KeyManager, MultikeyPair } from './interface.js';
+import { KeyManager } from './interface.js';
 
 /**
  * A class for managing cryptographic keys for the Btc1 DID method.
@@ -40,7 +40,7 @@ export class Btc1KeyManager implements KeyManager {
    * during cryptographic operations.
    */
   constructor(params?: KeyManagerParams) {
-    this._keyStore = params?.keyStore ?? new MemoryStore<KeyIdentifier, MultikeyPair>();
+    this._keyStore = params?.keyStore ?? new MemoryStore<KeyIdentifier, KeyPair>();
     this.activeKeyUri = params?.keyUri ?? '';
   }
 

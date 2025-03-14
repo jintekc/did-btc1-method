@@ -8,7 +8,7 @@ import {
 } from '@web5/dids';
 import { networks } from 'bitcoinjs-lib';
 import BitcoinRpc from '../bitcoin/rpc-client.js';
-import { Btc1DidDocument, DidDocument } from './did-document.js';
+import { Btc1DidDocument } from './did-document.js';
 import { Btc1KeyManager } from './key-manager/index.js';
 import { DidPlaceholder, RecoveryOptions, SidecarDataCID, SidecarDataSMT, UnixTimestamp } from './types.js';
 import { DidDocumentPatch } from '../utils/json-patch.js';
@@ -70,7 +70,7 @@ export interface IntermediateVerificationMethod extends DidVerificationMethod {
     publicKeyMultibase: string;
 }
 
-export interface IntermediateDocument extends DidDocument {
+export interface IntermediateDocument extends Btc1DidDocument {
     id:  DidPlaceholder;
     verificationMethod: IntermediateVerificationMethod[];
 }
@@ -109,8 +109,8 @@ export interface IDidBtc1Utils {
     extractDidFragment(input: unknown): string | undefined;
     isDidVerificationMethod(obj: unknown): boolean;
     isDidService(obj: unknown): boolean;
-    getVerificationMethods(params: { didDocument: DidDocument; }): DidVerificationMethod[];
-    getDidServices(params: { didDocument: DidDocument; }): DidService[];
+    getVerificationMethods(params: { didDocument: Btc1DidDocument; }): DidVerificationMethod[];
+    getDidServices(params: { didDocument: Btc1DidDocument; }): DidService[];
     generateBitcoinAddrs(params: GenerateBitcoinAddrs): Array<Array<string>>;
     generateBeaconServices(params: BeaconServicesParams): Array<DidService>;
     generateBeaconService(params: BeaconServiceParams): DidService;
