@@ -1,8 +1,7 @@
 import { MultibaseKeyPair, ProofBytes } from '@did-btc1/bip340-cryptosuite';
 import { KeyValueStore, RequireOnly } from '@web5/common';
-import { DidVerificationMethod } from '@web5/dids';
 import { BlockV3 } from '../bitcoin/types.js';
-import { Btc1DidDocument } from '../btc1/did-document.js';
+import { Btc1DidDocument, Btc1VerificationMethod } from '../btc1/did-document.js';
 import {
   DidComponents,
   DidCreateOptions,
@@ -51,7 +50,7 @@ export type RecoveryOptions = {
 export type InvokePayloadParams = {
   identifier: string;
   updatePayload: UpdatePayload;
-  verificationMethod: DidVerificationMethod;
+  verificationMethod: Btc1VerificationMethod;
   options: RecoveryOptions;
 }
 
@@ -86,7 +85,7 @@ export type TargetDocumentParams = {
 };
 export type BroadcastPayloadParams = {
   beaconService: BeaconService;
-  didUpdateInvocation: DidVerificationMethod;
+  didUpdateInvocation: Btc1VerificationMethod;
   options: DidResolutionOptions;
 }
 export enum DidBtc1IdTypes {

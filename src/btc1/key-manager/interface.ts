@@ -1,6 +1,14 @@
-import { HashBytes, KeyPair, MultibaseKeyPair } from '@did-btc1/bip340-cryptosuite';
+import { HashBytes, MultikeyJSON } from '@did-btc1/bip340-cryptosuite';
+import { Hex, KeyPair, PublicKey, SignatureBytes } from '@did-btc1/bip340-key-pair';
 import { KeyIdentifier } from '@web5/crypto';
 import { Btc1KeyManagerOptions } from '../../index.js';
+
+export type MultikeyPair = MultikeyJSON;
+export type GenerateKeyParams = {
+  id: string;
+  controller: string;
+  options: Btc1KeyManagerOptions
+};
 
 /**
  * The interface for the Btc1KeyManager class.
@@ -25,18 +33,10 @@ export interface KeyManager {
     /**
      * Exports the full key pair from the key store.
      * @param {KeyIdentifier} keyUri The URI of the key to export.
-     * @returns {Promise<MultibaseKeyPair>} The key pair associated with the key URI.
+     * @returns {Promise<KeyPair>} The key pair associated with the key URI.
      * @throws {Btc1KeyManagerError} If the key is not found in the key store.
      */
-    exportKey(keyUri: KeyIdentifier): Promise<MultibaseKeyPair>;
-
-    /**
-     * Generates a new key pair and imports it to the KeyManager.
-     * @public
-     * @param {boolean} importKey Whether to import the generated key pair.
-     * @returns {KeyIdentifier} The URI of the generated key pair.
-     */
-    generateKey({ importKey, active }: Btc1KeyManagerOptions): Promise<KeyIdentifier | KeyPair>;
+    exportKey(keyUri: KeyIdentifier): Promise<KeyPair>;
 
     /**
      * Computes the URI of a key pair.
@@ -52,7 +52,7 @@ export interface KeyManager {
      * @param {KeyIdentifier} keyUri The URI of the key to get the public key for.
      * @returns {Promise<PublicKey>} The public key of the key pair.
      */
-    // getPublicKey(keyUri: KeyIdentifier): Promise<PublicKey>;
+    getPublicKey(keyUri: KeyIdentifier): Promise<PublicKey>;
 
     /**
      * Imports a key pair into the key store.
@@ -68,9 +68,9 @@ export interface KeyManager {
      * Signs a message with a key pair.
      * @public
      * @param {KeyIdentifier} keyUri The URI of the key to use for signing.
-     * @returns {SignatureBytes} The signature of the input data.
+     * @returns {Promise<SignatureBytes>} The signature of the input data.
      */
-    // sign(keyUri: KeyIdentifier, data: Hex): SignatureBytes;
+    sign(keyUri: KeyIdentifier, data: Hex): Promise<SignatureBytes>;
 
     /**
      * Verifies if a signature was produced by a key pair.
@@ -80,5 +80,5 @@ export interface KeyManager {
      * @param {Hex} data The data that was signed.
      * @returns {Promise<boolean>} A promise that resolves if the signature is valid, and rejects otherwise.
      */
-    // verify(keyUri: KeyIdentifier, signature: SignatureBytes, data: Hex): Promise<boolean>;
+    verify(keyUri: KeyIdentifier, signature: SignatureBytes, data: Hex): Promise<boolean>;
 }
