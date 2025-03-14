@@ -1,8 +1,31 @@
 import { HashBytes, MultikeyJSON } from '@did-btc1/bip340-cryptosuite';
 import { Hex, KeyPair, PublicKey, SignatureBytes } from '@did-btc1/bip340-key-pair';
-import { KeyIdentifier } from '@web5/crypto';
-import { Btc1KeyManagerOptions } from '../../index.js';
+import { KeyValueStore } from '@web5/common';
 
+export type Btc1KeyManagerOptions = {
+  importKey?: boolean;
+  active?: boolean
+};
+
+/** Alias type for Btc1KeyManager keyUri */
+export type KeyIdentifier = string;
+
+/** Params for initializing a Btc1KeyManager class instance. */
+export type KeyManagerParams = {
+  /**
+   * An optional property to specify a custom `KeyValueStore` instance for key management. If not
+   * provided, {@link Btc1KeyManager | `Btc1KeyManager`} uses a default `MemoryStore` instance.
+   * This store is responsible for managing cryptographic keys, allowing them to be retrieved,
+   * stored, and managed during cryptographic operations.
+   */
+  keyStore?: KeyValueStore<KeyIdentifier, KeyPair>;
+
+  /**
+   * An optional property to specify a key URI for the key manager. If not provided, the key manager
+   * will generate a key URI based on the public key of the key pair.
+   */
+  keyUri?: KeyIdentifier;
+};
 export type MultikeyPair = MultikeyJSON;
 export type GenerateKeyParams = {
   id: string;

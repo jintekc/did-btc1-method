@@ -1,22 +1,22 @@
-import { PublicKey } from '@did-btc1/bip340-cryptosuite';
+import { PublicKey } from '@did-btc1/bip340-key-pair';
 import { strings } from '@helia/strings';
 import type { DidVerificationMethod } from '@web5/dids';
 import { DidError, DidErrorCode } from '@web5/dids';
 import { createHelia } from 'helia';
 import { CID } from 'multiformats/cid';
 import * as Digest from 'multiformats/hashes/digest';
+import { DEFAULT_BLOCK_CONFIRMATIONS } from '../../bitcoin/constants.js';
 import { getNetwork } from '../../bitcoin/network.js';
 import BitcoinRpc from '../../bitcoin/rpc-client.js';
 import { BlockHeight, BlockV2, BlockV3, RawTransactionV2, TargetBlockHeight } from '../../bitcoin/types.js';
-import { DEFAULT_BLOCK_CONFIRMATIONS } from '../../bitcoin/constants.js';
-import { ID_PLACEHOLDER_VALUE } from '../constants.js';
-import { Btc1Utils } from '../utils.js';
 import { GeneralUtils } from '../../utils/general.js';
+import { BeaconSignal } from '../beacons/interface.js';
+import { SingletonBeacon } from '../beacons/singleton/index.js';
+import { ID_PLACEHOLDER_VALUE } from '../constants.js';
 import { Btc1DidDocument } from '../did-document.js';
 import { ReadBlockchainParams } from '../interface.js';
 import { DidReadCas, DidReadDeterministic, DidReadExternal, DidReadSidecar, FindNextSignals, SidecarData, TargetDocumentParams, UnixTimestamp } from '../types.js';
-import { BeaconSignal } from '../beacons/interface.js';
-import { SingletonBeacon } from '../beacons/singleton/index.js';
+import { Btc1Utils } from '../utils.js';
 
 /**
  * Implements {@link https://dcdpr.github.io/did-btc1/#read | 4.2 Read}
@@ -56,7 +56,7 @@ export class Btc1Read {
     // Get the network object from the network name
     const network = getNetwork(networkName);
     // Encode the public key as a mult
-    const publicKeyMultibase = publicKey.encodeMultibase();
+    const publicKeyMultibase = publicKey.encode();
     // Generate the beacon services from the network and public key
     const service = Btc1Utils.generateBeaconServices({ network, publicKey: publicKey.x });
     // Return the resolved DID Document object

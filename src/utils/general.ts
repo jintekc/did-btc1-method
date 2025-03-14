@@ -1,13 +1,14 @@
-import { Canonicalize, BIP340_MULTIKEY_PREFIX } from '@did-btc1/bip340-cryptosuite';
+import { Canonicalize } from '@did-btc1/bip340-cryptosuite';
+import { BIP340_MULTIKEY_PREFIX } from '@did-btc1/bip340-key-pair';
 import { sha256 } from '@noble/hashes/sha256';
 import { CURVE, getPublicKey, utils } from '@noble/secp256k1';
 import { HDKey } from '@scure/bip32';
 import { generateMnemonic, mnemonicToSeed } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import { base58btc } from 'multiformats/bases/base58';
+import { PublicKeyBytes } from '../btc1/types.js';
 import { JSONObject } from '../exts.js';
 import { HdWallet } from '../types/shared.js';
-import { PublicKeyBytes } from '../btc1/types.js';
 
 /**
  * Static class of general utility functions for the did-btc1 spec implementation
@@ -24,8 +25,10 @@ export class GeneralUtils {
     if (xOnlyPublicKeyBytes.length !== 32) {
       throw new Error('x-only public key must be 32 bytes');
     }
+    const prefix = Array.from(BIP340_MULTIKEY_PREFIX);
+    const x = Array.from(xOnlyPublicKeyBytes);
     // Set the prefix and the public key bytes
-    const multikeyBytes = new Uint8Array([...Array.from(BIP340_MULTIKEY_PREFIX), ...Array.from(xOnlyPublicKeyBytes)]);
+    const multikeyBytes = new Uint8Array([...prefix, ...x]);
     // Encode the public key as a multibase base58btc string
     return base58btc.encode(multikeyBytes);
   }
